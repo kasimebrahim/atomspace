@@ -1,5 +1,5 @@
 /*
- * opencog/atoms/proto/StringValue.cc
+ * opencog/atoms/value/StringValue.cc
  *
  * Copyright (C) 2015, 2016 Linas Vepstas
  * All Rights Reserved
@@ -20,8 +20,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <opencog/atoms/proto/StringValue.h>
-#include <opencog/atoms/proto/ValueFactory.h>
+#include <opencog/atoms/value/StringValue.h>
+#include <opencog/atoms/value/ValueFactory.h>
 
 using namespace opencog;
 

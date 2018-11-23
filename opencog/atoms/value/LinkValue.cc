@@ -1,5 +1,5 @@
 /*
- * opencog/atoms/proto/LinkValue.cc
+ * opencog/atoms/value/LinkValue.cc
  *
  * Copyright (C) 2015 Linas Vepstas
  * All Rights Reserved
@@ -20,8 +20,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <opencog/atoms/proto/LinkValue.h>
-#include <opencog/atoms/proto/ValueFactory.h>
+#include <opencog/atoms/value/LinkValue.h>
+#include <opencog/atoms/value/ValueFactory.h>
 
 using namespace opencog;
 

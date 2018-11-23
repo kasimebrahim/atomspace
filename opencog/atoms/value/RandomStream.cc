@@ -1,5 +1,5 @@
 /*
- * opencog/atoms/proto/RandomStream.cc
+ * opencog/atoms/value/RandomStream.cc
  *
  * Copyright (C) 2015, 2018 Linas Vepstas
  * All Rights Reserved
@@ -21,8 +21,8 @@
  */
 
 #include <stdlib.h>
-#include <opencog/atoms/proto/RandomStream.h>
-#include <opencog/atoms/proto/ValueFactory.h>
+#include <opencog/atoms/value/RandomStream.h>
+#include <opencog/atoms/value/ValueFactory.h>
 
 using namespace opencog;
 
