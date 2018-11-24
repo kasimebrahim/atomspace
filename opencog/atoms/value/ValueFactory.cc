@@ -18,7 +18,7 @@ void ValueFactory::addCreator(Type vtype, CreateProto func)
     cast_register[vtype] = func;
 }
 
-ProtoAtomPtr ValueFactory::recreate(ProtoAtomPtr ptr)
+ValuePtr ValueFactory::recreate(ValuePtr ptr)
 {
     Type vtype = ptr->get_type();
     if (cast_register.find(vtype) != cast_register.end())

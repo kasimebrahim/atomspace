@@ -45,7 +45,7 @@ bool LinkValue::operator==(const Value& other) const
 std::string LinkValue::to_string(const std::string& indent) const
 {
 	std::string rv = indent + "(" + nameserver().getTypeName(_type) + "\n";
-	for (ProtoAtomPtr v :_value)
+	for (ValuePtr v :_value)
 		rv += std::string(" ") + v->to_string(indent + "   ");
 	rv += ")\n";
 	return rv;
@@ -54,7 +54,7 @@ std::string LinkValue::to_string(const std::string& indent) const
 // Adds factory when library is loaded.
 static __attribute__ ((constructor)) void init(void)
 {
-    valuefactory().addFactory(LINK_VALUE, (CreateProto) & (createLinkValue<std::vector<ProtoAtomPtr>>),
-                                    std::vector<std::type_index> {std::type_index(typeid(std::vector<ProtoAtomPtr>))});
+    valuefactory().addFactory(LINK_VALUE, (CreateProto) & (createLinkValue<std::vector<ValuePtr>>),
+                                    std::vector<std::type_index> {std::type_index(typeid(std::vector<ValuePtr>))});
 }
 

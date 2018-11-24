@@ -12,7 +12,7 @@
 
 namespace opencog
 {
-using CreateProto = ProtoAtomPtr (*) (...);
+using CreateProto = ValuePtr (*) (...);
 
 
 class ValueFactory
@@ -55,11 +55,11 @@ public:
      void addCreator(Type vtype, CreateProto func);
 
      /**
-      * Casts a protoAtomPtr object into its type's Value pointer.
+      * Casts a ValuePtr object into its type's Value pointer.
       *
-      * @param ptr the protoAtomPtr to be casted.
+      * @param ptr the ValuePtr to be casted.
       */
-     ProtoAtomPtr recreate(ProtoAtomPtr ptr);
+     ValuePtr recreate(ValuePtr ptr);
 
      /** Does dynamic dispatching of the appropriate create functions which matches argument provided.
       * @param arg the value type constructor argument.
@@ -67,7 +67,7 @@ public:
       * @throws invalid_argument exception.
       */
     template <typename T>
-    ProtoAtomPtr create(Type vtype, T arg)
+    ValuePtr create(Type vtype, T arg)
     {
         // Once we know there is a matching function, cache.
         static std::map<Type, CreateProto> cache = {};
