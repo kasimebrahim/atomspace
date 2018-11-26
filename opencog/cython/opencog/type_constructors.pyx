@@ -9,7 +9,7 @@
 
 from opencog.atomspace import AtomSpace, TruthValue, types
 from atomspace cimport (cProtoAtomPtr, createFloatValue, createStringValue,
-                        createLinkValue, ProtoAtom, createProtoAtom,
+                        createLinkValue, Value, createProtoAtom,
                         cProtoAtomPtr)
 from libcpp.vector cimport vector
 from libcpp.string cimport string
