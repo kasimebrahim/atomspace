@@ -94,12 +94,12 @@ cdef extern from "opencog/atoms/value/Value.h" namespace "opencog":
         bint operator==(const cProtoAtom&)
         bint operator!=(const cProtoAtom&)
     
-    ctypedef shared_ptr[cProtoAtom] cProtoAtomPtr "opencog::ValuePtr"
+    ctypedef shared_ptr[cProtoAtom] cValuePtr "opencog::ValuePtr"
 
 cdef class Value:
-    cdef cProtoAtomPtr shared_ptr
+    cdef cValuePtr shared_ptr
 
-cdef Value createProtoAtom(cProtoAtomPtr shared_ptr)
+cdef Value createProtoAtom(cValuePtr shared_ptr)
 
 # Atom
 ctypedef public short av_type
@@ -115,8 +115,8 @@ cdef extern from "opencog/atoms/base/Atom.h" namespace "opencog":
 
         tv_ptr getTruthValue()
         void setTruthValue(tv_ptr tvp)
-        void setValue(const cHandle& key, const cProtoAtomPtr& value)
-        cProtoAtomPtr getValue(const cHandle& key) const
+        void setValue(const cHandle& key, const cValuePtr& value)
+        cValuePtr getValue(const cHandle& key) const
 
         output_iterator getIncomingSetByType(output_iterator, Type type)
 
@@ -180,7 +180,7 @@ cdef extern from "opencog/atomspace/AtomSpace.h" namespace "opencog":
         cHandle get_handle(Type t, string s)
         cHandle get_handle(Type t, vector[cHandle])
 
-        cHandle set_value(cHandle h, cHandle key, cProtoAtomPtr value)
+        cHandle set_value(cHandle h, cHandle key, cValuePtr value)
         cHandle set_truthvalue(cHandle h, tv_ptr tvn)
 
         bint is_valid_handle(cHandle h)
@@ -237,16 +237,16 @@ cdef extern from "opencog/atoms/value/FloatValue.h" namespace "opencog":
     cdef cppclass cFloatValue "opencog::FloatValue":
         const vector[double]& value() const;
     
-    cdef cProtoAtomPtr createFloatValue(...)
+    cdef cValuePtr createFloatValue(...)
 
 cdef extern from "opencog/atoms/value/StringValue.h" namespace "opencog":
     cdef cppclass cStringValue "opencog::StringValue":
         const vector[string]& value() const;
     
-    cdef cProtoAtomPtr createStringValue(...)
+    cdef cValuePtr createStringValue(...)
 
 cdef extern from "opencog/atoms/value/LinkValue.h" namespace "opencog":
     cdef cppclass cLinkValue "opencog::LinkValue":
-        const vector[cProtoAtomPtr]& value() const;
+        const vector[cValuePtr]& value() const;
 
-    cdef cProtoAtomPtr createLinkValue(...)
+    cdef cValuePtr createLinkValue(...)

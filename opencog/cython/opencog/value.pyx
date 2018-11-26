@@ -1,6 +1,6 @@
 from cpython.object cimport Py_EQ, Py_NE
 
-cdef Value createProtoAtom(cProtoAtomPtr shared_ptr):
+cdef Value createProtoAtom(cValuePtr shared_ptr):
     """Factory method to construct Value from C++ ProtoAtomPtr (see
     http://docs.cython.org/en/latest/src/userguide/extension_types.html#instantiation-from-existing-c-c-pointers
     for example)"""
@@ -24,10 +24,10 @@ cdef list vector_of_strings_to_list(const vector[string]* cpp_vector):
         inc(it)
     return list
 
-cdef list vector_of_protoatoms_to_list(const vector[cProtoAtomPtr]* cpp_vector):
+cdef list vector_of_protoatoms_to_list(const vector[cValuePtr]* cpp_vector):
     list = []
     it = cpp_vector.const_begin()
-    cdef cProtoAtomPtr value
+    cdef cValuePtr value
     while it != cpp_vector.const_end():
         value = deref(it)
         if is_a(deref(value).get_type(), types.Value):
