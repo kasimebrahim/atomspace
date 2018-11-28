@@ -83,7 +83,7 @@ cdef extern from "opencog/atoms/value/atom_types.h" namespace "opencog":
     cdef Type NOTYPE
 
 cdef extern from "opencog/atoms/value/Value.h" namespace "opencog":
-    cdef cppclass cProtoAtom "opencog::Value":
+    cdef cppclass cValue "opencog::Value":
         Type get_type()
         bint is_atom()
         bint is_node()
@@ -91,10 +91,10 @@ cdef extern from "opencog/atoms/value/Value.h" namespace "opencog":
         
         string to_string()
         string to_short_string()
-        bint operator==(const cProtoAtom&)
-        bint operator!=(const cProtoAtom&)
+        bint operator==(const cValue&)
+        bint operator!=(const cValue&)
     
-    ctypedef shared_ptr[cProtoAtom] cValuePtr "opencog::ValuePtr"
+    ctypedef shared_ptr[cValue] cValuePtr "opencog::ValuePtr"
 
 cdef class Value:
     cdef cValuePtr shared_ptr
@@ -108,7 +108,7 @@ cdef extern from "opencog/atoms/base/Link.h" namespace "opencog":
     pass
 
 cdef extern from "opencog/atoms/base/Atom.h" namespace "opencog":
-    cdef cppclass cAtom "opencog::Atom" (cProtoAtom):
+    cdef cppclass cAtom "opencog::Atom" (cValue):
         cAtom()
 
         output_iterator getIncomingSet(output_iterator)

@@ -32,7 +32,7 @@ cdef vector[string] list_of_strings_to_vector(list python_list):
         cpp_vector.push_back(value.encode('UTF-8'))
     return cpp_vector
 
-cdef vector[cValuePtr] list_of_protoatoms_to_vector(list python_list):
+cdef vector[cValuePtr] list_of_values_to_vector(list python_list):
     cdef vector[cValuePtr] cpp_vector
     cdef Value value
     for value in python_list:
@@ -57,9 +57,9 @@ cdef createValue(type, arg):
             result = createStringValue(<string>(arg.encode('UTF-8')))
     elif type == types.LinkValue:
         if (isinstance(arg, list)):
-            result = createLinkValue(list_of_protoatoms_to_vector(arg))
+            result = createLinkValue(list_of_values_to_vector(arg))
         else:
-            result = createLinkValue(list_of_protoatoms_to_vector([arg]))
+            result = createLinkValue(list_of_values_to_vector([arg]))
     else:
         raise TypeError('Unexpected value type {}'.format(type))
     
