@@ -40,7 +40,7 @@ class UnifyGlobUTest :  public CxxTest::TestSuite
 private:
 	AtomSpace _as;
 	SchemeEval _eval;
-	Handle X, Y;
+	Handle X, Y, P;
 	Context::VariablesStack X_varstack;
 
 public:
@@ -50,8 +50,10 @@ public:
 		logger().set_print_to_stdout_flag(true);
 		logger().set_timestamp_flag(false);
 
-		X = an(VARIABLE_NODE, "$X");
-		Y = an(VARIABLE_NODE, "$Y");
+		X = an(GLOB_NODE, "$X");
+		Y = an(GLOB_NODE, "$Y");
+
+		P = an(PREDICATE_NODE, "P");
 	}
 
 	void setUp();
@@ -65,18 +67,15 @@ void UnifyGlobUTest::setUp(void)
 
 void UnifyGlobUTest::test_simple_glob()
 {
-	Handle left = _eval.eval_h("(GlobNode \"g\")");
 	Handle left_vardecl = _eval.eval_h("(TypedVariable"
 			                            "(GlobNode \"g\")"
 			                            "(TypeNode \"PredicateNode\"))");
 
-	Handle right = _eval.eval_h("(Predicate \"is\")");
-
-	Unify unify(left, right, left_vardecl);
+	Unify unify(X, P, left_vardecl);
 	Unify::SolutionSet result = unify();
 	std::cout<< "\n result\n" << oc_to_string(result) <<std::endl;
 
-	Unify::SolutionSet expected({{{{right, left}, right}}});
+	Unify::SolutionSet expected({{{{X, P}, P}}});
 	std::cout<< "\n expected\n" << oc_to_string(expected) <<std::endl;
 
 	TS_ASSERT_EQUALS(result, expected);
