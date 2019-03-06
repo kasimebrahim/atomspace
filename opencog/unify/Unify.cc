@@ -499,7 +499,12 @@ Unify::SolutionSet Unify::unify(const Handle& lh, const Handle& rh,
 			} else {
 				return mkvarsol(lch, rch);
 			}
-		} else if (!lq and !rq)
+		}
+		else if (lt == GLOB_NODE or rt == GLOB_NODE)
+		{
+			return mkvarsol(lch, rch);
+		}
+		else if (!lq and !rq)
 			return SolutionSet(lch.is_node_satisfiable(rch));
 	}
 
@@ -999,7 +1004,7 @@ bool Unify::inherit(const Handle& lh, const Handle& rh,
 	// whether lh type inherits from it (using Variables::is_type),
 	// otherwise assume rh is the top type and thus anything inherits
 	// from it.
-	if (rc.is_free_variable(rh))
+	if (rc.is_free_variable(rh) or rt == GLOB_NODE)
         return not _variables.is_in_varset(rh) or _variables.is_type(rh, lh);
 
 	return false;
