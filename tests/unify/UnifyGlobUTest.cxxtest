@@ -40,7 +40,7 @@ class UnifyGlobUTest :  public CxxTest::TestSuite
 private:
 	AtomSpace _as;
 	SchemeEval _eval;
-	Handle X, Y, P;
+	Handle X, Y, P, Q, R, PQ, XP, QRP, lX;
 	Context::VariablesStack X_varstack;
 
 public:
@@ -54,11 +54,23 @@ public:
 		Y = an(GLOB_NODE, "$Y");
 
 		P = an(PREDICATE_NODE, "P");
+		Q = an(PREDICATE_NODE, "Q");
+		R = an(PREDICATE_NODE, "R");
+
+		PQ = al(LIST_LINK, {P, Q});
+		XP = al(LIST_LINK, {X, P});
+		QRP = al(LIST_LINK, {Q, R, P});
+
+		HandleSeq seq = {X};
+		lX = al(LIST_LINK, seq);
 	}
 
 	void setUp();
 
 	void test_simple_glob();
+	void test_simple_glob2();
+	void test_simple_glob3();
+	void test_simple_glob4();
 };
 
 void UnifyGlobUTest::setUp(void)
@@ -76,6 +88,46 @@ void UnifyGlobUTest::test_simple_glob()
 	std::cout<< "\n result\n" << oc_to_string(result) <<std::endl;
 
 	Unify::SolutionSet expected({{{{X, P}, P}}});
+	std::cout<< "\n expected\n" << oc_to_string(expected) <<std::endl;
+
+	TS_ASSERT_EQUALS(result, expected);
+}
+
+void UnifyGlobUTest::test_simple_glob2()
+{
+	Unify unify(X, PQ);
+	Unify::SolutionSet result = unify();
+	std::cout<< "\n result\n" << oc_to_string(result) <<std::endl;
+
+	Unify::SolutionSet expected({{{{X, PQ}, PQ}}});
+	std::cout<< "\n expected\n" << oc_to_string(expected) <<std::endl;
+
+	TS_ASSERT_EQUALS(result, expected);
+}
+
+void UnifyGlobUTest::test_simple_glob3()
+{
+	Handle left_vardecl = _eval.eval_h("(TypedVariable"
+			                                   "(GlobNode \"g\")"
+			                                   "(TypeNode \"PredicateNode\"))");
+
+	Unify unify(XP, QRP, left_vardecl);
+	Unify::SolutionSet result = unify();
+	std::cout<< "\n result\n" << oc_to_string(result) <<std::endl;
+
+	Unify::SolutionSet expected({{{{X, Q}, Q}}, {{{X, R}, R}}});
+	std::cout<< "\n expected\n" << oc_to_string(expected) <<std::endl;
+
+	TS_ASSERT_EQUALS(result, expected);
+}
+
+void UnifyGlobUTest::test_simple_glob4()
+{
+	Unify unify(lX, PQ);
+	Unify::SolutionSet result = unify();
+	std::cout<< "\n result\n" << oc_to_string(result) <<std::endl;
+
+	Unify::SolutionSet expected({{{{X, Q}, Q}}, {{{X, P}, P}}});
 	std::cout<< "\n expected\n" << oc_to_string(expected) <<std::endl;
 
 	TS_ASSERT_EQUALS(result, expected);
