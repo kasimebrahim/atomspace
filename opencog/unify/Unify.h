@@ -134,6 +134,10 @@ public:
 	// Mapping from partition blocks to type
 	typedef std::map<Block, CHandle> Partition;
 
+	// Mapping from handle to arity pair
+	typedef std::pair<Arity, Arity> ArityPair;
+	typedef std::map<Handle, ArityPair> GlobScope;
+
 	// This is in fact a typed block but is merely named Block due to
 	// being so frequently used.
 	typedef Partition::value_type TypedBlock;
@@ -486,6 +490,21 @@ private:
 	SolutionSet ordered_glob_unify(const HandleSeq& lhs, const HandleSeq& rhs,
 	                               Context lhs_context=Context(),
 	                               Context rhs_context=Context()) const;
+
+	/**
+	* This builds a map of left and right handles to unify.
+	*/
+	bool config_ordered_glob_unify(const HandleSeq&, const HandleSeq&,
+	                               Unify::GlobScope&, Unify::GlobScope&,
+	                               Context, Context) const;
+
+	/**
+	 * when a handle in an ordered handleseq fails to unify. we need to make
+	 * sure it is not because a previous GlobNode is unified to more nodes
+	 * than it should, if that is the case we need to role back.
+	 */
+	bool role_back(GlobScope &, const HandleSeq &, Arity &, Arity &) const;
+
 	/**
 	 * Unify all pairs of CHandles.
 	 */
@@ -522,7 +541,7 @@ private:
 	SolutionSet mkvarsol(CHandle lhs, CHandle rhs) const;
 
 	/**
-	 * Return true if the atom contains GlobNode.
+	 * Return true if the atom contains GlobNode in its outgoingset.
 	 */
 	bool contain_glob(const Handle& h) const;
 

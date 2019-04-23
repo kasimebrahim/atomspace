@@ -36,6 +36,7 @@
 #include <opencog/atoms/core/RewriteLink.h>
 #include <opencog/atoms/pattern/PatternUtils.h>
 #include <opencog/atomspace/AtomSpace.h>
+#include <opencog/atoms/core/TypeNode.h>
 
 namespace opencog {
 
@@ -540,12 +541,10 @@ Unify::SolutionSet Unify::unify(const Handle& lh, const Handle& rh,
 	// they have the same arity
 	Arity lh_arity(lh->get_arity());
 	Arity rh_arity(rh->get_arity());
-	if (lh_arity != rh_arity) {
-		if (contain_glob(lh) or contain_glob(rh)) {
-			return ordered_glob_unify(lh->getOutgoingSet(), rh->getOutgoingSet(), lc, rc);
-		}
-		return SolutionSet();
+	if (contain_glob(lh) or contain_glob(rh)) {
+		return ordered_glob_unify(lh->getOutgoingSet(), rh->getOutgoingSet(), lc, rc);
 	}
+	else if (lh_arity != rh_arity) return SolutionSet();
 
 	if (is_unordered(rh))
 		return unordered_unify(lh->getOutgoingSet(), rh->getOutgoingSet(), lc, rc);
@@ -1043,8 +1042,191 @@ bool Unify::contain_glob(const Handle &handle) const {
 }
 
 Unify::SolutionSet
-Unify::ordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs, Context lhs_context, Context rhs_context) const {
-	return Unify::SolutionSet();
+Unify::ordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs,
+                          Context lhs_context, Context rhs_context) const {
+	SolutionSet sol(false);
+	GlobScope left_unify_map;
+	GlobScope right_unify_map;
+
+	if (!config_ordered_glob_unify(lhs, rhs, left_unify_map, right_unify_map, lhs_context, rhs_context))
+		return SolutionSet();
+
+	auto left_iter = left_unify_map.begin();
+	while (left_iter!=left_unify_map.end()) {
+		auto lside = (*left_iter).first;
+		auto rside_indices = (*left_iter).second;
+		for (Arity k = rside_indices.first; k < rside_indices.second + 1; ++k) {
+			if (lside == rhs[k]) continue;
+			auto s = unify(lside, rhs[k], lhs_context, rhs_context);
+//			sol = join(sol, s);
+			sol.insert(s.begin(), s.end());
+
+			if (not sol.is_satisfiable()) return SolutionSet();
+		}
+		left_iter++;
+	}
+
+	auto right_iter = right_unify_map.begin();
+	while (right_iter!=right_unify_map.end()) {
+		auto rside = (*right_iter).first;
+		auto lside_indices = (*right_iter).second;
+		for (Arity k = lside_indices.first; k < lside_indices.second + 1; ++k) {
+			if (rside == lhs[k]) continue;
+			auto s = unify(lhs[k], rside, lhs_context, rhs_context);
+//			sol = join(sol, s);
+			sol.insert(s.begin(), s.end());
+
+			if (not sol.is_satisfiable()) return SolutionSet();
+		}
+		right_iter++;
+	}
+
+	return sol;
+}
+
+bool Unify::config_ordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs,
+                                      Unify::GlobScope &left_unify_map, Unify::GlobScope &right_unify_map,
+                                      Context lhs_context, Context rhs_context) const
+{
+	Arity lhs_arity(lhs.size());
+	Arity rhs_arity(rhs.size());
+	Arity i=0, j=0;
+	// we create local copy to keep track of the Type of a GlobNode, if not
+	// specified in _variables.
+	Variables local_variables(_variables);
+	while (i < lhs_arity or j < rhs_arity) {
+
+		Handle lhs_handle = i < lhs_arity ? lhs[i] : Handle();
+		Type lhs_type = lhs_handle ? lhs_handle->get_type() : NOTYPE;
+
+		Handle rhs_handle = j < rhs_arity ? rhs[j] : Handle();
+		Type rhs_type = rhs_handle ? rhs_handle->get_type() : NOTYPE;
+
+		if (j == rhs_arity) {
+			if (left_unify_map.count(lhs_handle)) break;
+			if (!role_back(left_unify_map, lhs, i, j)) return false;
+			continue;
+		}
+		if (i == lhs_arity) {
+			if (right_unify_map.count(rhs_handle)) break;
+			if (!role_back(right_unify_map, rhs, j, i)) return false;
+			continue;
+		}
+
+		if (lhs_type == GLOB_NODE) {
+			// if the GlobNode is not in local_variables already we
+			// need to give and store the type of the GlobNode, to make
+			// sure a single GlobNode cant match multiple types.
+			if (not local_variables.is_in_varset(lhs_handle)) {
+				TypeNodePtr v = createTypeNode(rhs_type);
+				HandleSeq hs;
+				hs.push_back(lhs_handle);
+				hs.push_back(HandleCast(v));
+				Handle vlink = createLink(hs, TYPED_VARIABLE_LINK);
+				VariableListPtr vlist = createVariableList(vlink);
+
+				local_variables.extend(vlist->get_variables());
+			}
+				// GlobNode is in local_variables and dosen't have similar type with rhs.
+			else if (not local_variables.is_type(lhs_handle, rhs_handle)) {
+				// The GlobNode can not be satisfied.
+				if (!left_unify_map.count(lhs_handle)) {
+					// now we need to check if any GlobNode is matched more than it should.
+					if(!role_back(left_unify_map, lhs, ++i, j)) {
+						if(!role_back(right_unify_map, rhs, ++j, i))
+							return false;
+					}
+					continue;
+				}
+				i++;
+				continue;
+			}
+			// if this is the first time the GlobNode is satisfieble
+			if (!left_unify_map.count(lhs_handle)) {
+				ArityPair pair(j, j);
+				left_unify_map[lhs_handle] = pair;
+			}
+			// if the GlobNode found a match in subsequent terms
+			left_unify_map[lhs_handle].second = j;
+			j++;
+			if (j == rhs_arity) i++;
+			continue;
+		}
+
+		if (rhs_type == GLOB_NODE) {
+			// if the GlobNode is not in local_variables already we
+			// need to give and store the type of the GlobNode, to make
+			// sure a single GlobNode cant match multiple types.
+			if (not local_variables.is_in_varset(rhs_handle)) {
+				TypeNodePtr v = createTypeNode(lhs_type);
+				HandleSeq hs;
+				hs.push_back(rhs_handle);
+				hs.push_back(HandleCast(v));
+				Handle vlink = createLink(hs, TYPED_VARIABLE_LINK);
+				VariableListPtr vlist = createVariableList(vlink);
+
+				local_variables.extend(vlist->get_variables());
+			}
+				// GlobNode is in local_variables and dosen't have similar type with rhs.
+			else if (not local_variables.is_type(rhs_handle, lhs_handle)) {
+				// The GlobNode can not be satisfied.
+				if (!right_unify_map.count(rhs_handle)) {
+					// now we need to check if any GlobNode is matched more than it should.
+					if(!role_back(left_unify_map, lhs, ++i, j)) {
+						if(!role_back(right_unify_map, rhs, ++j, i)) return false;
+					}
+					continue;
+				}
+				j++;
+				continue;
+			}
+			// if this is the first time the GlobNode is satisfieble
+			if (!right_unify_map.count(rhs_handle)) {
+				ArityPair pair(i, i);
+				right_unify_map[rhs_handle] = pair;
+			}
+			// if the GlobNode found a match in subsequent terms
+			right_unify_map[rhs_handle].second = i;
+			i++;
+			if (i == lhs_arity) j++;
+			continue;
+		}
+
+		CHandle lch(lhs_handle, lhs_context);
+		CHandle rch(rhs_handle, rhs_context);
+		CHandle var = type_intersection(lch, rch);
+
+		if (var) {
+			ArityPair pair(j, j);
+			left_unify_map[lhs_handle] = pair;
+			i++,j++;
+			continue;
+		}
+
+		// now we need to check if any GlobNode is matched more than it should.
+		if(!role_back(left_unify_map, lhs, i, j)) {
+			if(!role_back(right_unify_map, rhs, j, i)) return false;
+		}
+	}
+	return true;
+}
+
+bool Unify::role_back(Unify::GlobScope &unify_map, const HandleSeq &lhs, Arity &i, Arity &j) const
+{
+	for (int k = i-1; k > -1 ; --k) {
+		if (lhs[k]->get_type() == GLOB_NODE) {
+			if (unify_map[lhs[k]].second != unify_map[lhs[k]].first) {
+				unify_map[lhs[k]].second -= 1;
+				j = unify_map[lhs[k]].second + 1;
+				i = k + 1;
+				return true;
+			}
+			i = k;
+			unify_map.erase(lhs[k]);
+			return role_back(unify_map, lhs, i, j);
+		}
+	}
+	return false;
 }
 
 Variables merge_variables(const Variables& lhs, const Variables& rhs)
