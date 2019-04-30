@@ -1084,6 +1084,12 @@ Unify::ordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs,
 	return sol;
 }
 
+Unify::SolutionSet
+Unify::unordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs, Context lhs_context, Context rhs_context) const
+{
+	return Unify::SolutionSet();
+}
+
 bool Unify::config_ordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs,
                                       Unify::GlobScope &left_unify_map, Unify::GlobScope &right_unify_map,
                                       Context lhs_context, Context rhs_context) const

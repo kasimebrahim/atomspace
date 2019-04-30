@@ -484,6 +484,14 @@ private:
 	                          Context rhs_context=Context()) const;
 
 	/**
+	 * Unify all elements of lhs with all elements of rhs, considering
+	 * all permutations and globnodes.
+	 */
+	SolutionSet unordered_glob_unify(const HandleSeq& lhs, const HandleSeq& rhs,
+	                            Context lhs_context=Context(),
+	                            Context rhs_context=Context()) const;
+
+	/**
 	 * Unify all elements of lhs with all elements of rhs, in the
 	 * provided order where atleast one contains a globnode.
 	 */
