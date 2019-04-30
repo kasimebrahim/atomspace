@@ -542,7 +542,10 @@ Unify::SolutionSet Unify::unify(const Handle& lh, const Handle& rh,
 	Arity lh_arity(lh->get_arity());
 	Arity rh_arity(rh->get_arity());
 	if (contain_glob(lh) or contain_glob(rh)) {
-		return ordered_glob_unify(lh->getOutgoingSet(), rh->getOutgoingSet(), lc, rc);
+		if (is_unordered(rh))
+			return unordered_glob_unify(lh->getOutgoingSet(), rh->getOutgoingSet(), lc, rc);
+		else
+			return ordered_glob_unify(lh->getOutgoingSet(), rh->getOutgoingSet(), lc, rc);
 	}
 	else if (lh_arity != rh_arity) return SolutionSet();
 
