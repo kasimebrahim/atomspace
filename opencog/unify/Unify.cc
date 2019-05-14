@@ -606,7 +606,43 @@ Unify::SolutionSet
 Unify::unordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs,
 		Context lhs_context, Context rhs_context) const
 {
-	return Unify::SolutionSet();
+	Arity lhs_arity(lhs.size());
+
+	SolutionSet sol;
+	for (Arity i = 0; i < lhs_arity; ++i) {
+		auto head_sol = unify(lhs[i], rhs[0], lhs_context, rhs_context);
+		if (head_sol.is_satisfiable()) {
+			HandleSeq lhs_tail;
+			HandleSeq rhs_tail;
+			if (rhs[0]->get_type() == GLOB_NODE) {
+				SolutionSet tail_sol;
+				lhs_tail = HandleSeq(cp_erase(lhs, i));
+				rhs_tail = HandleSeq(rhs);
+				do {
+					tail_sol = unordered_glob_unify(lhs_tail, rhs_tail, lhs_context, rhs_context);
+					if (tail_sol.is_satisfiable()) {
+						// since join is not implemented for GLOB_NODE I am Using insert for now
+						// SolutionSet perm_sol = join(head_sol, tail_sol);
+						SolutionSet perm_sol;
+						perm_sol.insert(head_sol.begin(), head_sol.end());
+						perm_sol.insert(tail_sol.begin(), tail_sol.end());
+
+						// Union merge satisfiable permutations
+						sol.insert(perm_sol.begin(), perm_sol.end());
+					} else {
+						rhs_tail = HandleSeq(cp_erase(rhs, 0));
+						if (rhs_tail.size() == lhs_tail.size() && lhs_tail.size() == 0) {
+							sol.insert(head_sol.begin(), head_sol.end());
+							break;
+						}
+						lhs_tail = HandleSeq(lhs);
+						head_sol.clear();
+					}
+				} while (!tail_sol.is_satisfiable());
+			}
+		}
+	}
+	return sol;
 }
 
 Unify::SolutionSet Unify::pairwise_unify(const std::set<CHandlePair>& pchs) const
