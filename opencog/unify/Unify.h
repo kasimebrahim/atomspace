@@ -480,6 +480,13 @@ private:
 	                          Context rhs_context=Context()) const;
 
 	/**
+	 * Unify all elements of lhs with all elements of rhs,
+	 * where atleast one contains a globnode.
+	 */
+	SolutionSet unordered_glob_unify(const HandleSeq& lhs, const HandleSeq& rhs,
+	                               Context lhs_context=Context(),
+	                               Context rhs_context=Context()) const;
+	/**
 	 * Unify all pairs of CHandles.
 	 */
 	SolutionSet pairwise_unify(const std::set<CHandlePair>& pchs) const;
@@ -513,6 +520,11 @@ private:
 	 * Passed by copy because this method may use and modify the copy.
 	 */
 	SolutionSet mkvarsol(CHandle lhs, CHandle rhs) const;
+
+	/**
+	 * Return true if the atom contains GlobNode.
+	 */
+	bool contain_glob(const Handle& h) const;
 
 public:                         // TODO: being friend with UnifyUTest
                                 // somehow doesn't work

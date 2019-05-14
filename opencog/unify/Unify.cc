@@ -540,8 +540,15 @@ Unify::SolutionSet Unify::unify(const Handle& lh, const Handle& rh,
 	// they have the same arity
 	Arity lh_arity(lh->get_arity());
 	Arity rh_arity(rh->get_arity());
-	if (lh_arity != rh_arity)
+	if (lh_arity != rh_arity) {
+		if (contain_glob(lh) or contain_glob(rh)) {
+			if (is_unordered(rh))
+				return unordered_glob_unify(lh->getOutgoingSet(), rh->getOutgoingSet(), lc, rc);
+			else
+				OC_ASSERT(false, "not implemented yet");
+		}
 		return SolutionSet();
+	}
 
 	if (is_unordered(rh))
 		return unordered_unify(lh->getOutgoingSet(), rh->getOutgoingSet(), lc, rc);
@@ -593,6 +600,13 @@ Unify::SolutionSet Unify::ordered_unify(const HandleSeq& lhs,
 			break;
 	}
 	return sol;
+}
+
+Unify::SolutionSet
+Unify::unordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs,
+		Context lhs_context, Context rhs_context) const
+{
+	return Unify::SolutionSet();
 }
 
 Unify::SolutionSet Unify::pairwise_unify(const std::set<CHandlePair>& pchs) const
@@ -1029,6 +1043,13 @@ bool Unify::inherit(const TypeSet& lhs, const TypeSet& rhs) const
 		if (not inherit(ty, rhs))
 			return false;
 	return true;
+}
+
+bool Unify::contain_glob(const Handle &handle) const {
+	for (const Handle& h : handle->getOutgoingSet()) {
+		if (h->get_type() == GLOB_NODE) return true;
+	}
+	return false;
 }
 
 Variables merge_variables(const Variables& lhs, const Variables& rhs)
