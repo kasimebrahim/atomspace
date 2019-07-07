@@ -991,7 +991,40 @@ void Unify::increament(Unify::Indices &ids, Arity s) const
 
 std::set<HandleSeqSeq> Unify::merge_globs(HandleSeqSeq &untyped_globs, HandleSeqSeq &typed_globs, Arity size) const
 {
-	return std::set<HandleSeqSeq>();
+	std::set<HandleSeqSeq> sol;
+
+	Arity num_merge = typed_globs.size() - (size - untyped_globs.size());
+
+	if (num_merge == 0) {
+		HandleSeqSeq _hss(untyped_globs.begin(), untyped_globs.end());
+		_hss.insert(_hss.end(), typed_globs.begin(), typed_globs.end());
+		sol.insert(_hss);
+		return sol;
+	}
+
+	for (Arity i=0; i < untyped_globs.size(); i++) {
+		for(Arity j=0; j < typed_globs.size(); j++) {
+			HandleSeq head(untyped_globs[i]);
+			auto top_hs = typed_globs[j];
+			head.insert(head.end(), top_hs.begin(), top_hs.end());
+
+			// TODO avoid redundancy
+			HandleSeqSeq l_rem(untyped_globs);
+			HandleSeqSeq r_rem(typed_globs);
+
+			l_rem.erase(l_rem.begin()+i);
+			r_rem.erase(r_rem.begin()+j);
+
+			auto tail = merge_globs(l_rem, r_rem, size-1);
+
+			for (auto _hss : tail) {
+				HandleSeqSeq _tmp(_hss);
+				_tmp.push_back(head);
+				sol.insert(_tmp);
+			}
+		}
+	}
+	return sol;
 }
 
 Unify::GSolution Unify::perm(std::set<HandleSeqSeq> &globs, Unify::GBlock &term) const
