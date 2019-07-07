@@ -153,6 +153,7 @@ public:
 
 	typedef std::vector<Arity> Indices;
 
+	typedef std::pair<Arity , Arity> PairIndice;
 	typedef std::pair<Indices, Indices> PairIndices;
 
 	// Empty partition set
@@ -189,6 +190,7 @@ public:
 	typedef std::map<HandleCHandleMap, Handle> TypedSubstitutions;
 	typedef std::pair<HandleCHandleMap, Handle> TypedSubstitution;
 
+	typedef std::vector<std::pair<SolutionSet, PairIndice>> SolutionPairs;
 	typedef std::vector<std::pair<SolutionSet, PairIndices>> SolutionsPairs;
 
 	/**
@@ -515,6 +517,9 @@ private:
 
 	SolutionsPairs
 	unify_terms(const GBlock &l_terms, const GBlock &r_terms) const;
+
+	SolutionPairs
+	unify_term_sub(const HandleSeq &l_term, const HandleSeq &r_term) const;
 
 	SolutionSet
 	unify_globs(const SolutionsPairs &term_solutions, GBlock &l_glob,
