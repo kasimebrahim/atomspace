@@ -957,7 +957,36 @@ std::set<HandleSeqSeq> Unify::split_globs(HandleSeq &globs, Arity s) const
 
 std::set<HandleSeqSeq> Unify::select_subset(HandleSeq &unt_globs, Arity s) const
 {
-	return std::set<HandleSeqSeq>();
+	std::set<HandleSeqSeq> total_sol;
+	Indices ids(s);
+	std::iota(ids.begin(), ids.end(), 0);
+
+	while (ids[0] <= unt_globs.size() - s) {
+		HandleSeqSeq sol={};
+		HandleSeq left;
+		HandleSeq right(unt_globs);
+		for (int i=ids.size()-1; i>=0; i--) {
+			left.push_back(right[ids[i]]);
+			right.erase(right.begin()+ids[i]);
+		}
+		sol.push_back(left);
+		sol.push_back(right);
+		total_sol.insert(sol);
+		increament(ids, unt_globs.size());
+	}
+	return total_sol;
+}
+
+void Unify::increament(Unify::Indices &ids, Arity s) const
+{
+	Arity li=0;
+	for (Arity i=0; i<ids.size(); i++) {
+		if (ids[i] < s - (ids.size() - i)) li=i;
+	}
+	ids[li] += 1;
+	for (Arity i=li+1; i<ids.size(); i++) {
+		ids[i] = ids[i-1] + 1;
+	}
 }
 
 std::set<HandleSeqSeq> Unify::merge_globs(HandleSeqSeq &untyped_globs, HandleSeqSeq &typed_globs, Arity size) const
