@@ -533,6 +533,13 @@ private:
 
 	GSolution combin_gblock(GBlock &glob_set, GBlock &term_set) const;
 
+	std::set<HandleSeqSeq> split_globs(HandleSeq &globs, Arity s) const;
+
+	std::set<HandleSeqSeq> merge_globs(HandleSeqSeq &untyped_globs,
+	                                   HandleSeqSeq &typed_globs, Arity size) const;
+
+	GSolution perm(std::set<HandleSeqSeq> &globs, GBlock &term) const;
+
 	/**
 	 * Unify all pairs of CHandles.
 	 */
