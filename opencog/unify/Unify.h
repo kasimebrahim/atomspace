@@ -510,6 +510,9 @@ private:
 
 	void parse_type(const HandleSeq &seq, GBlock &glob_seq, GBlock &term_seq) const;
 
+	void insert_type(GBlock &vector, const Handle &handle,
+	                 Type type, bool offset=false) const;
+
 	SolutionsPairs
 	unify_terms(const GBlock &l_terms, const GBlock &r_terms) const;
 

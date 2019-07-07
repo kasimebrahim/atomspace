@@ -678,6 +678,28 @@ Unify::SolutionSet Unify::unordered_glob_partial_unify(const HandleSeq &lhs, con
 
 void Unify::parse_type(const HandleSeq &seq, Unify::GBlock &glob_seq, Unify::GBlock &term_seq) const
 {
+	for (const auto handle : seq) {
+		Type type = handle->get_type();
+		// TODO handle VariableNode
+		if (type == GLOB_NODE) {
+			if (_variables.is_in_varset(handle)) {
+				auto ts = (*_variables._simple_typemap.find(handle)).second;
+				// TODO: ts is TypeSet figure out when and why a variable would
+				//  contain multiple types. and edit the /*ts.begin()/ accordingly.
+				insert_type(glob_seq, handle, *ts.begin(), true);
+			}
+			else {
+				insert_type(glob_seq, handle, NOTYPE);
+			}
+		}
+		else {
+			insert_type(term_seq, handle, handle->get_type());
+		}
+	}
+}
+
+void Unify::insert_type(Unify::GBlock &vector, const Handle &handle, Type type, bool offset) const
+{
 }
 
 Unify::SolutionsPairs Unify::unify_terms(const Unify::GBlock &l_terms,
