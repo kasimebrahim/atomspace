@@ -1057,7 +1057,21 @@ Unify::GSolution Unify::calc_partition(const HandleSeqSeq &glob, Unify::GBlock &
 
 Unify::GSolution Unify::join(Unify::GMap &gmap, Unify::GSolution &gsolution) const
 {
-	return opencog::Unify::GSolution();
+	GSolution gsol;
+
+	if (gsolution.empty()) {
+		GPart pr = {gmap};
+		gsol.insert(pr);
+		return gsol;
+	}
+
+	for (const auto gp : gsolution) {
+		GPart pr;
+		pr.insert(gmap);
+		pr.insert(gp.begin(), gp.end());
+		gsol.insert(pr);
+	}
+	return gsol;
 }
 
 Unify::SolutionSet Unify::pairwise_unify(const std::set<CHandlePair>& pchs) const
