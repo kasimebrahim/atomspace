@@ -606,7 +606,23 @@ Unify::SolutionSet
 Unify::unordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs,
 		Context lhs_context, Context rhs_context) const
 {
-	return Unify::SolutionSet();
+	SolutionSet sol;
+	GBlock l_glob_set, l_term_set,
+			r_glob_set, r_term_set;
+
+	parse_type(lhs, l_glob_set, l_term_set);
+	parse_type(rhs, r_glob_set, r_term_set);
+
+	SolutionsPairs term_solutions = unify_terms(l_term_set, r_term_set);
+	// Add empty term_solutions as one possibility.
+	std::pair<Indices, Indices> def_index({});
+	SolutionSet def_sol({});
+	term_solutions.push_back({def_sol, def_index});
+
+	sol = unify_globs(term_solutions, l_glob_set, l_term_set, r_glob_set, r_term_set,
+	                  lhs_context, rhs_context);
+
+	return sol;
 }
 
 Unify::SolutionSet
@@ -658,6 +674,24 @@ Unify::SolutionSet Unify::unordered_glob_partial_unify(const HandleSeq &lhs, con
 		}
 	}
 	return sol;
+}
+
+void Unify::parse_type(const HandleSeq &seq, Unify::GBlock &glob_seq, Unify::GBlock &term_seq) const
+{
+}
+
+Unify::SolutionsPairs Unify::unify_terms(const Unify::GBlock &l_terms,
+                                         const Unify::GBlock &r_terms) const
+{
+	return opencog::Unify::SolutionsPairs();
+}
+
+Unify::SolutionSet
+Unify::unify_globs(const Unify::SolutionsPairs &term_solutions, Unify::GBlock &l_glob,
+                   Unify::GBlock &l_term, Unify::GBlock &r_glob, Unify::GBlock &r_term,
+                   Context &lhs_context, Context &rhs_context) const
+{
+	return Unify::SolutionSet();
 }
 
 Unify::SolutionSet Unify::pairwise_unify(const std::set<CHandlePair>& pchs) const
