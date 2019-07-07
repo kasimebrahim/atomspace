@@ -156,6 +156,8 @@ public:
 	typedef std::pair<Arity , Arity> PairIndice;
 	typedef std::pair<Indices, Indices> PairIndices;
 
+	typedef std::set<GPart> GSolution;
+
 	// Empty partition set
 	static const Partitions empty_partitions;
 
@@ -525,6 +527,9 @@ private:
 	unify_globs(const SolutionsPairs &term_solutions, GBlock &l_glob,
 	            GBlock &l_term, GBlock &r_glob, GBlock &r_term,
 	            Context &lhs_context, Context &rhs_context) const;
+
+	GSolution build_solution(GBlock &glob_seq,
+	                         GBlock &term_seq) const;
 
 	/**
 	 * Unify all pairs of CHandles.

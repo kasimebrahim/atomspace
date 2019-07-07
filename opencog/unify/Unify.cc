@@ -831,7 +831,49 @@ Unify::unify_globs(const Unify::SolutionsPairs &term_solutions, Unify::GBlock &l
                    Unify::GBlock &l_term, Unify::GBlock &r_glob, Unify::GBlock &r_term,
                    Context &lhs_context, Context &rhs_context) const
 {
-	return Unify::SolutionSet();
+	SolutionSet sol;
+	for (auto pair : term_solutions) {
+		auto ss = pair.first;
+		auto rm_indices = pair.second;
+
+		GBlock _l_term_set(l_term);
+		GBlock _r_term_set(r_term);
+		if (!rm_indices.first.empty()) {
+			auto left_rm_terms = _l_term_set.begin() + rm_indices.first[0];
+			left_rm_terms->erase(left_rm_terms->begin() + rm_indices.first[1]);
+			if (left_rm_terms->empty()) _l_term_set.erase(left_rm_terms);
+			auto right_rm_terms = _r_term_set.begin() + rm_indices.second[0];
+			right_rm_terms->erase(right_rm_terms->begin() + rm_indices.second[1]);
+			if (right_rm_terms->empty()) _r_term_set.erase(right_rm_terms);
+		}
+
+		if ((_l_term_set.empty() and (!r_glob.empty())) or
+		    ((!_l_term_set.empty()) and r_glob.empty()) or
+		    (_r_term_set.empty() and (!l_glob.empty())) or
+		    ((!_r_term_set.empty()) and l_glob.empty()))
+			continue;
+
+		GSolution _l_gSolution = build_solution(l_glob, _r_term_set);
+		GSolution _r_gSolution = build_solution(r_glob, _l_term_set);
+		for (const auto l_gpart : _l_gSolution) {
+			SolutionSet p_sol;
+			for (const auto r_gpart : _r_gSolution) {
+				GPart part(l_gpart);
+				part.insert(r_gpart.begin(), r_gpart.end());
+				auto _ss = unordered_glob_sub_unify(part, lhs_context, rhs_context);
+				// TODO join ss, _ss
+				_ss.insert(ss.begin(), ss.end());
+				p_sol.insert(_ss.begin(), _ss.end());
+			}
+			sol.insert(p_sol.begin(), p_sol.end());
+		}
+	}
+	return sol;
+}
+
+Unify::GSolution Unify::build_solution(Unify::GBlock &glob_seq, Unify::GBlock &term_seq) const
+{
+	return opencog::Unify::GSolution();
 }
 
 Unify::SolutionSet Unify::pairwise_unify(const std::set<CHandlePair>& pchs) const
