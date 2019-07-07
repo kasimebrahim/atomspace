@@ -544,6 +544,10 @@ private:
 
 	GSolution perm(std::set<HandleSeqSeq> &globs, GBlock &term) const;
 
+	GSolution calc_partition(const HandleSeqSeq &vector, GBlock &term) const;
+
+	GSolution join(GMap &gmap, GSolution &gsolution) const;
+
 	/**
 	 * Unify all pairs of CHandles.
 	 */

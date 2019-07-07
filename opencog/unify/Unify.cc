@@ -1029,6 +1029,34 @@ std::set<HandleSeqSeq> Unify::merge_globs(HandleSeqSeq &untyped_globs, HandleSeq
 
 Unify::GSolution Unify::perm(std::set<HandleSeqSeq> &globs, Unify::GBlock &term) const
 {
+	GSolution sol;
+	for (const HandleSeqSeq& hss : globs) {
+		auto ss = calc_partition(hss, term);
+		sol.insert(ss.begin(), ss.end());
+	}
+	return sol;
+}
+
+Unify::GSolution Unify::calc_partition(const HandleSeqSeq &glob, Unify::GBlock &term) const
+{
+	GSolution sol;
+	for (Arity i=0; i<glob.size(); i++) {
+		GMap m = {glob[i], term[0]};
+
+		HandleSeqSeq _glob(glob);
+		HandleSeqSeq _term(term);
+		_glob.erase(_glob.begin()+i);
+		_term.erase(_term.begin()+0);
+
+		auto tail = calc_partition(_glob, _term);
+		auto ss = join(m, tail);
+		sol.insert(ss.begin(), ss.end());
+	}
+	return sol;
+}
+
+Unify::GSolution Unify::join(Unify::GMap &gmap, Unify::GSolution &gsolution) const
+{
 	return opencog::Unify::GSolution();
 }
 
