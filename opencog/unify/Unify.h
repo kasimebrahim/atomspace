@@ -537,6 +537,8 @@ private:
 
 	std::set<HandleSeqSeq> select_subset(HandleSeq &unt_globs, Arity s) const;
 
+	void increament(Indices &ids, Arity size) const;
+
 	std::set<HandleSeqSeq> merge_globs(HandleSeqSeq &untyped_globs,
 	                                   HandleSeqSeq &typed_globs, Arity size) const;
 
