@@ -629,7 +629,15 @@ Unify::SolutionSet
 Unify::unordered_glob_sub_unify(const GPart part, Context lhscontext,
                                 Context rhsContext) const
 {
-	return Unify::SolutionSet();
+	SolutionSet sol;
+	for (const GMap map : part) {
+		auto ss = unordered_glob_partial_unify(map.first, map.second);
+		if (!ss.is_satisfiable()) {
+			return SolutionSet();
+		}
+		sol.insert(ss.begin(), ss.end());
+	}
+	return sol;
 }
 
 Unify::SolutionSet Unify::unordered_glob_partial_unify(const HandleSeq &lhs, const HandleSeq &rhs, Context lhs_context,
