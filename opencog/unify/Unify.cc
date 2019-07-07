@@ -895,6 +895,48 @@ Unify::GSolution Unify::build_solution(Unify::GBlock &glob_seq, Unify::GBlock &t
 
 Unify::GSolution Unify::combin_gblock(Unify::GBlock &glob_set, Unify::GBlock &term_set) const
 {
+	GSolution sol;
+
+	HandleSeq untyped_globs = glob_set[0];
+	HandleSeqSeq typed_globs(glob_set.begin()+1, glob_set.end());
+
+	Arity terms_size = term_set.size();
+	Arity glob_size = glob_set.size();
+	Arity untyped_globs_size = untyped_globs.size();
+
+	// i:e {[G][][]----[T1][T2][T3][T4]} [G] can be splited to at most four groups.
+	Arity max_num_splits = untyped_globs_size > terms_size ? terms_size : untyped_globs_size;
+	// i:e {[G][][]----[T1][T2][T3][T4]} we need [G] to be splited to at least two.
+	Arity min_num_splits = (terms_size - glob_size) + 1;
+
+	std::set<HandleSeqSeq> untyped_globs_set;
+	for (Arity s = min_num_splits; s <= max_num_splits; ++s) {
+		std::set<HandleSeqSeq> ss = split_globs(untyped_globs, s);
+		untyped_globs_set.insert(ss.begin(), ss.end());
+	}
+
+	std::set<HandleSeqSeq> glob_sets;
+	for (auto g_set : untyped_globs_set) {
+		std::set<HandleSeqSeq> ss = merge_globs(g_set, typed_globs, terms_size);
+		glob_sets.insert(ss.begin(), ss.end());
+	}
+
+	sol = perm(glob_sets, term_set);
+	return sol;
+}
+
+std::set<HandleSeqSeq> Unify::split_globs(HandleSeq &globs, Arity s) const
+{
+	return std::set<HandleSeqSeq>();
+}
+
+std::set<HandleSeqSeq> Unify::merge_globs(HandleSeqSeq &untyped_globs, HandleSeqSeq &typed_globs, Arity size) const
+{
+	return std::set<HandleSeqSeq>();
+}
+
+Unify::GSolution Unify::perm(std::set<HandleSeqSeq> &globs, Unify::GBlock &term) const
+{
 	return opencog::Unify::GSolution();
 }
 
