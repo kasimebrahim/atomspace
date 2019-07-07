@@ -726,7 +726,61 @@ void Unify::insert_type(Unify::GBlock &vector, const Handle &handle, Type type, 
 Unify::SolutionsPairs Unify::unify_terms(const Unify::GBlock &l_terms,
                                          const Unify::GBlock &r_terms) const
 {
-	return opencog::Unify::SolutionsPairs();
+	if (l_terms.empty() or r_terms.empty()) return {};
+
+	SolutionsPairs sol_map;
+	const HandleSeq r_t = r_terms[0];
+
+	for (Arity l = 0; l < l_terms.size(); l++) {
+		const HandleSeq l_t = l_terms[l];
+		if (l_t[0]->get_type() == r_t[0]->get_type()) {
+			auto sub_sol_map = unify_term_sub(l_t, r_t);
+			for (auto pair : sub_sol_map) {
+				auto ss = pair.first;
+				auto index = pair.second;
+				Indices l_i = {l, index.first};
+				Indices r_i = {0, index.second};
+				std::pair<Indices, Indices> index_pair = {l_i, r_i};
+				sol_map.push_back({ss, index_pair});
+			}
+
+			GBlock _l_terms(l_terms);
+			GBlock _r_terms(r_terms);
+			_l_terms.erase(_l_terms.begin() + l);
+			_r_terms.erase(_r_terms.begin() + 0);
+
+			auto _sol_map = unify_terms(_l_terms, _r_terms);
+			for (auto pair : _sol_map) {
+				auto ss = pair.first;
+				auto indices = pair.second;
+				Arity offset = indices.first[0] >= l ? indices.first[0] + 1 : indices.first[0];
+				Indices l_i = {offset, indices.first[1]};
+				Indices r_i = {indices.second[0] + 1, indices.second[1]};
+				std::pair<Indices, Indices> indices_pair = {l_i, r_i};
+				sol_map.push_back({ss, indices_pair});
+			}
+			return sol_map;
+		}
+	}
+
+	GBlock _r_terms(r_terms);
+	_r_terms.erase(_r_terms.begin() + 0);
+
+	auto _sol_map = unify_terms(l_terms, _r_terms);
+	for (auto pair : _sol_map) {
+		auto ss = pair.first;
+		auto indices = pair.second;
+		Indices l_i = {indices.first[0], indices.first[1]};
+		Indices r_i = {indices.second[0] + 1, indices.second[1]};
+		std::pair<Indices, Indices> indices_pair = {l_i, r_i};
+		sol_map.push_back({ss, indices_pair});
+	}
+	return sol_map;
+}
+
+Unify::SolutionPairs Unify::unify_term_sub(const HandleSeq &l_term, const HandleSeq &r_term) const
+{
+	return opencog::Unify::SolutionPairs();
 }
 
 Unify::SolutionSet
