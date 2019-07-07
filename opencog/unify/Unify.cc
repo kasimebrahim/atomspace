@@ -606,6 +606,19 @@ Unify::SolutionSet
 Unify::unordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs,
 		Context lhs_context, Context rhs_context) const
 {
+	return Unify::SolutionSet();
+}
+
+Unify::SolutionSet
+Unify::unordered_glob_sub_unify(const GPart part, Context lhscontext,
+                                Context rhsContext) const
+{
+	return Unify::SolutionSet();
+}
+
+Unify::SolutionSet Unify::unordered_glob_partial_unify(const HandleSeq &lhs, const HandleSeq &rhs, Context lhs_context,
+                                                       Context rhs_context) const
+{
 	Arity lhs_arity(lhs.size());
 	Arity rhs_arity(rhs.size());
 
@@ -647,7 +660,7 @@ Unify::unordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs,
 				lhs_tail = HandleSeq(lhs);
 				rhs_tail = HandleSeq(cp_erase(rhs, 0));
 				do {
-					tail_sol = unordered_glob_unify(lhs_tail, rhs_tail, lhs_context, rhs_context);
+					tail_sol = unordered_glob_partial_unify(lhs_tail, rhs_tail, lhs_context, rhs_context);
 					if (tail_sol.is_satisfiable()) {
 						// since join is not implemented for GLOB_NODE I am Using insert for now
 						// SolutionSet perm_sol = join(head_sol, tail_sol);

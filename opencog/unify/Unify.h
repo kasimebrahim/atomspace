@@ -145,6 +145,10 @@ public:
 	// satisfiable when used in standalone.
 	typedef std::set<Partition> Partitions;
 
+	typedef std::pair<HandleSeq, HandleSeq> GMap;
+
+	typedef std::set<GMap> GPart;
+
 	// Empty partition set
 	static const Partitions empty_partitions;
 
@@ -486,6 +490,16 @@ private:
 	SolutionSet unordered_glob_unify(const HandleSeq& lhs, const HandleSeq& rhs,
 	                               Context lhs_context=Context(),
 	                               Context rhs_context=Context()) const;
+
+	Unify::SolutionSet
+	unordered_glob_sub_unify(const GPart part,
+	                         Context lhscontext, Context rhsContext) const;
+
+	SolutionSet
+	unordered_glob_partial_unify(const HandleSeq &lhs, const HandleSeq &rhs,
+	                             Context lhs_context=Context(),
+	                             Context rhs_context=Context()) const;
+
 	/**
 	 * Unify all pairs of CHandles.
 	 */
