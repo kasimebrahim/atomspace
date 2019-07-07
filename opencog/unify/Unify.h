@@ -531,6 +531,8 @@ private:
 	GSolution build_solution(GBlock &glob_seq,
 	                         GBlock &term_seq) const;
 
+	GSolution combin_gblock(GBlock &glob_set, GBlock &term_set) const;
+
 	/**
 	 * Unify all pairs of CHandles.
 	 */

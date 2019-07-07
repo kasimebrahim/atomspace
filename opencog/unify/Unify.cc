@@ -873,6 +873,28 @@ Unify::unify_globs(const Unify::SolutionsPairs &term_solutions, Unify::GBlock &l
 
 Unify::GSolution Unify::build_solution(Unify::GBlock &glob_seq, Unify::GBlock &term_seq) const
 {
+	// Minimum number of type of terms glob_set can hold.
+	Arity min_glob_arity = glob_seq.size();
+
+	// Number of term types to hold.
+	Arity term_arity = term_seq.size();
+
+	if (term_arity == 0 or min_glob_arity == 0) return Unify::GSolution({{}});
+
+	// Maximum number of type of terms glob_set can hold.
+	// Type undeclared GlobNodes can hold multiple typed terms, each a single type.
+	Arity max_glob_arity = glob_seq.size() + glob_seq[0].size() - 1;
+
+	if (not(min_glob_arity <= term_arity) and
+	    not(term_arity <= max_glob_arity)) {
+		return Unify::GSolution();
+	}
+
+	return combin_gblock(glob_seq, term_seq);
+}
+
+Unify::GSolution Unify::combin_gblock(Unify::GBlock &glob_set, Unify::GBlock &term_set) const
+{
 	return opencog::Unify::GSolution();
 }
 
