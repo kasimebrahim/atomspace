@@ -927,6 +927,36 @@ Unify::GSolution Unify::combin_gblock(Unify::GBlock &glob_set, Unify::GBlock &te
 
 std::set<HandleSeqSeq> Unify::split_globs(HandleSeq &globs, Arity s) const
 {
+	std::set<HandleSeqSeq> result;
+
+	if (s == 1) result = {{globs}};
+
+	else if (s == 2) {
+		// TODO Handle redundant selects
+		for (Arity r = 1; r <= globs.size() - 1; r++) {
+			std::set<HandleSeqSeq> splited = select_subset(globs, r);
+			result.insert(splited.begin(), splited.end());
+		}
+	}
+
+	else {
+		std::set<HandleSeqSeq> shss = split_globs(globs, s - 1);
+		for (HandleSeqSeq hss : shss) {
+			// assuming the zeroes item will be the longest
+			std::set<HandleSeqSeq> _shss = split_globs(hss[0], 2);
+			for (HandleSeqSeq _hss : _shss) {
+				HandleSeqSeq tmp(_hss.begin(), _hss.end());
+				tmp.insert(tmp.end(), hss.begin()+1, hss.end());
+				result.insert(tmp);
+			}
+		}
+	}
+
+	return result;
+}
+
+std::set<HandleSeqSeq> Unify::select_subset(HandleSeq &unt_globs, Arity s) const
+{
 	return std::set<HandleSeqSeq>();
 }
 
