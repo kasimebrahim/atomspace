@@ -149,6 +149,12 @@ public:
 
 	typedef std::set<GMap> GPart;
 
+	typedef std::vector<HandleSeq> GBlock;
+
+	typedef std::vector<Arity> Indices;
+
+	typedef std::pair<Indices, Indices> PairIndices;
+
 	// Empty partition set
 	static const Partitions empty_partitions;
 
@@ -182,6 +188,8 @@ public:
 	// Handle by Variables.
 	typedef std::map<HandleCHandleMap, Handle> TypedSubstitutions;
 	typedef std::pair<HandleCHandleMap, Handle> TypedSubstitution;
+
+	typedef std::vector<std::pair<SolutionSet, PairIndices>> SolutionsPairs;
 
 	/**
 	 * Ctor. Initialize for the unification of lhs and rhs, with
@@ -499,6 +507,16 @@ private:
 	unordered_glob_partial_unify(const HandleSeq &lhs, const HandleSeq &rhs,
 	                             Context lhs_context=Context(),
 	                             Context rhs_context=Context()) const;
+
+	void parse_type(const HandleSeq &seq, GBlock &glob_seq, GBlock &term_seq) const;
+
+	SolutionsPairs
+	unify_terms(const GBlock &l_terms, const GBlock &r_terms) const;
+
+	SolutionSet
+	unify_globs(const SolutionsPairs &term_solutions, GBlock &l_glob,
+	            GBlock &l_term, GBlock &r_glob, GBlock &r_term,
+	            Context &lhs_context, Context &rhs_context) const;
 
 	/**
 	 * Unify all pairs of CHandles.
