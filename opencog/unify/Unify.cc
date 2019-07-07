@@ -780,7 +780,50 @@ Unify::SolutionsPairs Unify::unify_terms(const Unify::GBlock &l_terms,
 
 Unify::SolutionPairs Unify::unify_term_sub(const HandleSeq &l_term, const HandleSeq &r_term) const
 {
-	return opencog::Unify::SolutionPairs();
+	if (l_term.empty() or r_term.empty()) return {};
+
+	SolutionPairs sol_map;
+	const Handle r_t = r_term[0];
+
+	for (Arity l = 0; l < l_term.size(); l++) {
+		const Handle l_t = l_term[l];
+		auto ss = unify(l_t, r_t);
+
+		if (ss.is_satisfiable()) {
+			PairIndice idx = {l, 0};
+			sol_map.push_back({ss, idx});
+
+			HandleSeq _l_term(l_term);
+			HandleSeq _r_term(r_term);
+			_l_term.erase(_l_term.begin() + l);
+
+			auto _sol_map = unify_term_sub(_l_term, _r_term);
+
+			for (auto pair : _sol_map) {
+				auto ss = pair.first;
+				auto index = pair.second;
+				Arity l_i = index.first >= l ? index.first + 1 : index.first;
+				Arity r_i = index.second;
+				std::pair<Arity, Arity> idx_pair = {l_i, r_i};
+				sol_map.push_back({ss, idx_pair});
+			}
+			return sol_map;
+		}
+	}
+
+	HandleSeq _r_term(r_term);
+	_r_term.erase(_r_term.begin() + 0);
+
+	auto _sol_map = unify_term_sub(l_term, _r_term);
+	for (auto pair : _sol_map) {
+		auto ss = pair.first;
+		auto index = pair.second;
+		Arity l_i = index.first;
+		Arity r_i = index.second + 1;
+		std::pair<Arity, Arity> idx_pair = {l_i, r_i};
+		sol_map.push_back({ss, idx_pair});
+	}
+	return sol_map;
 }
 
 Unify::SolutionSet
