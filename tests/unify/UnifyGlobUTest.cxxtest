@@ -40,7 +40,13 @@ class UnifyGlobUTest :  public CxxTest::TestSuite
 private:
 	AtomSpace _as;
 	SchemeEval _eval;
-	Handle X, Y, P, Q, R, PQ, UNXY, UNQRP, lX;
+	Handle X, Y, U, V, W;
+	Handle P, Q, R, S, T, D;
+	Handle C1, C2;
+	Handle PQ, lX;
+	Handle UNXY, UNQRP, UNC1C2, UNC1C2S, UNXYP, UNXYPQ, UNSC1U, UNXYUVW, UNSTDC1C2,
+			UNUVAND, UNSDRAND;
+
 	Context::VariablesStack X_varstack;
 
 public:
@@ -52,25 +58,50 @@ public:
 
 		X = an(GLOB_NODE, "$X");
 		Y = an(GLOB_NODE, "$Y");
+		U = an(GLOB_NODE, "$U");
+		V = an(GLOB_NODE, "$V");
+		W = an(GLOB_NODE, "$W");
 
 		P = an(PREDICATE_NODE, "P");
 		Q = an(PREDICATE_NODE, "Q");
 		R = an(PREDICATE_NODE, "R");
+		S = an(PREDICATE_NODE, "S");
+		T = an(PREDICATE_NODE, "T");
+		D = an(PREDICATE_NODE, "D");
+
+		C1 = an(CONCEPT_NODE, "C1");
+		C2 = an(CONCEPT_NODE, "C2");
 
 		PQ = al(LIST_LINK, {P, Q});
-		UNXY = al(AND_LINK, {X, Y});
-		UNQRP = al(AND_LINK, {Q, R, P});
-
 		HandleSeq seq = {X};
 		lX = al(LIST_LINK, seq);
+
+		UNXY = al(AND_LINK, {X, Y});
+		UNQRP = al(AND_LINK, {Q, R, P});
+		UNC1C2 = al(AND_LINK, {C1, C2});
+		UNC1C2S = al(AND_LINK, {C1, C2, S});
+		UNXYP = al(AND_LINK, {X, Y, P});
+		UNXYPQ = al(AND_LINK, {X, Y, P, Q});
+		UNSC1U = al(AND_LINK, {S, C1, U});
+		UNXYUVW = al(AND_LINK, {X, Y, U, V, W});
+		UNSTDC1C2 = al(AND_LINK, {S, T, D, C1, C2});
+
+		UNUVAND = al(AND_LINK, {U, V, UNXY});
+		UNSDRAND = al(AND_LINK, {S, D, R, UNC1C2});
 	}
 
 	void setUp();
 
+	// TODO: THIS UNIT TESTS ARE VALID UNTIL JOINING SOLUTIONS THAT CONTAIN
+	//  GLOB_NODE IS SUPPORTED. UPDATE AS SOON AS JOIN IS IMPLEMENTED.
 	void test_simple_glob();
 	void test_simple_glob2();
 	void test_simple_glob3();
 	void test_simple_glob4();
+	void test_simple_glob5();
+	void test_simple_glob6();
+	void test_simple_glob7();
+	void test_simple_glob8();
 };
 
 void UnifyGlobUTest::setUp(void)
@@ -134,6 +165,68 @@ void UnifyGlobUTest::test_simple_glob4()
 	                             {{{X, Q}, Q}}, {{{Y, R}, R}}, {{{Y, P}, P}},
 	                             {{{Y, Q}, Q}}, {{{X, R}, R}}, {{{Y, P}, P}},
 	                             {{{Y, Q}, Q}}, {{{Y, R}, R}}, {{{X, P}, P}}});
+	std::cout<< "\n expected\n" << oc_to_string(expected) <<std::endl;
+
+	TS_ASSERT_EQUALS(result, expected);
+}
+
+void UnifyGlobUTest::test_simple_glob5()
+{
+	Handle left_vardecl = _eval.eval_h("(TypedVariable"
+	                                   "(GlobNode \"$X\")"
+	                                   "(TypeNode \"PredicateNode\"))");
+
+	Unify unify(UNXYP, UNSC1U, left_vardecl);
+	Unify::SolutionSet result = unify();
+	std::cout<< "\n result\n" << oc_to_string(result) <<std::endl;
+
+	Unify::SolutionSet expected({{{{X, S}, S}, {{Y, C1}, C1}, {{U, P}, P}}});
+
+	std::cout<< "\n expected\n" << oc_to_string(expected) <<std::endl;
+
+	TS_ASSERT_EQUALS(result, expected);
+}
+
+void UnifyGlobUTest::test_simple_glob6()
+{
+	Unify unify(UNXYPQ, UNSC1U);
+	Unify::SolutionSet result = unify();
+	std::cout<< "\n result\n" << oc_to_string(result) <<std::endl;
+
+	Unify::SolutionSet expected({{{{U, Q}, Q}}, {{{U, P}, P}}, {{{Y, C1}, C1}},
+	                             {{{Y, S}, S}}, {{{X, C1}, C1}}, {{{X, S}, S}}});
+
+	std::cout<< "\n expected\n" << oc_to_string(expected) <<std::endl;
+
+	TS_ASSERT_EQUALS(result, expected);
+}
+
+void UnifyGlobUTest::test_simple_glob7()
+{
+	Handle left_vardecl = _eval.eval_h("(TypedVariable"
+	                                   "(GlobNode \"$X\")"
+	                                   "(TypeNode \"PredicateNode\"))");
+
+	Unify unify(UNXYUVW, UNSTDC1C2);
+	Unify::SolutionSet result = unify();
+	std::cout<< "\n result\n" << oc_to_string(result) <<std::endl;
+
+	// TODO check again
+	Arity expected_size = 120;
+
+	TS_ASSERT_EQUALS(result.size(), expected_size);
+}
+
+void UnifyGlobUTest::test_simple_glob8()
+{
+	Unify unify(UNUVAND, UNSDRAND);
+	Unify::SolutionSet result = unify();
+	std::cout<< "\n result\n" << oc_to_string(result) <<std::endl;
+
+	Unify::SolutionSet expected({{{{U, S}, S}}, {{{U, D}, D}}, {{{Y, C1}, C1}, {{X, C2}, C2}},
+	                             {{{Y, C2}, C2}, {{X, C1}, C1}}, {{{V, R}, R}}, {{{U, R}, R}},
+	                             {{{V, D}, D}}, {{{V, S}, S}}});
+
 	std::cout<< "\n expected\n" << oc_to_string(expected) <<std::endl;
 
 	TS_ASSERT_EQUALS(result, expected);
