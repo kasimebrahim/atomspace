@@ -700,6 +700,27 @@ void Unify::parse_type(const HandleSeq &seq, Unify::GBlock &glob_seq, Unify::GBl
 
 void Unify::insert_type(Unify::GBlock &vector, const Handle &handle, Type type, bool offset) const
 {
+	if (vector.empty()) {
+		if (offset) {vector.push_back({});}
+		HandleSeq seq = {handle};
+		vector.push_back(seq);
+		return;
+	}
+
+	if (type == NOTYPE) {
+		vector[0].push_back(handle);
+		return;
+	}
+
+	for (HandleSeq &v : vector) {
+		if (type == (*v.begin())->get_type()) {
+			v.push_back(handle);
+			return;
+		}
+	}
+
+	HandleSeq seq = {handle};
+	vector.push_back(seq);
 }
 
 Unify::SolutionsPairs Unify::unify_terms(const Unify::GBlock &l_terms,
