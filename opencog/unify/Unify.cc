@@ -739,9 +739,13 @@ Unify::SolutionSet Unify::join(const Partition& partition,
 {
 	// Find all partition blocks that have elements in common with block
 	TypedBlockSeq common_blocks;
-	for (const TypedBlock& p_block : partition)
+	for (const TypedBlock &p_block : partition) {
+		auto inter = set_intersection(p_block.first, block.first);
+		if ((inter.size() == 1) and (inter.begin()->handle->get_type() == GLOB_NODE))
+			continue;
 		if (not has_empty_intersection(block.first, p_block.first))
 			common_blocks.push_back(p_block);
+	}
 
 	Partition jp(partition);
 	if (common_blocks.empty()) {
