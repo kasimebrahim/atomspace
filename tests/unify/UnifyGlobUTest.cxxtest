@@ -1,0 +1,86 @@
+/**
+ * UnifyGlobUTest.cxxtest
+ *
+ * Copyright (C) 2019 OpenCog Foundation
+ * All Rights Reserved
+ * Author: Kasim
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License v3 as
+ * published by the Free Software Foundation and including the exceptions
+ * at http://opencog.org/wiki/Licenses
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program; if not, write to:
+ * Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+#include <opencog/util/Logger.h>
+
+#include <opencog/atoms/core/Context.h>
+#include <opencog/unify/Unify.h>
+#include <opencog/atomspace/AtomSpace.h>
+#include <opencog/guile/SchemeEval.h>
+
+#include <cxxtest/TestSuite.h>
+
+using namespace opencog;
+
+#define al _as.add_link
+#define an _as.add_node
+
+class UnifyGlobUTest :  public CxxTest::TestSuite
+{
+private:
+	AtomSpace _as;
+	SchemeEval _eval;
+	Handle X, P, Q;
+	Context::VariablesStack X_varstack;
+
+public:
+	UnifyGlobUTest() : _eval(&_as)
+	{
+		logger().set_level(Logger::DEBUG);
+		logger().set_print_to_stdout_flag(true);
+		logger().set_timestamp_flag(false);
+
+		X = an(GLOB_NODE, "$X");
+
+		P = an(PREDICATE_NODE, "P");
+		Q = an(PREDICATE_NODE, "Q");
+	}
+
+	void setUp();
+
+	void test_join();
+};
+
+void UnifyGlobUTest::setUp(void)
+{
+}
+
+void UnifyGlobUTest::test_join()
+{
+	Unify unify(P, Q);
+	Unify::Block b1({X, P});
+	Unify::Block b2({X, Q});
+	Unify::SolutionSet s1({{{b1, P}}});
+	Unify::SolutionSet s2({{{b2, Q}}});
+
+	auto result = unify.join(s1, s2);
+	Unify::SolutionSet expected({{{b1, P}, {b2, Q}}});
+
+	std::cout << "result = " << oc_to_string(result) << std::endl;
+	std::cout << "expected = " << oc_to_string(expected) << std::endl;
+
+	TS_ASSERT_EQUALS(result, expected);
+}
+
+#undef al
+#undef an
