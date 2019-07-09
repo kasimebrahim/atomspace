@@ -1051,24 +1051,31 @@ bool Unify::contain_glob(const Handle &handle) const {
 Unify::SolutionSet
 Unify::ordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs,
                           Context lhs_context, Context rhs_context) const {
-	SolutionSet sol(true);
-	GlobScope left_unify_map;
-	GlobScope right_unify_map;
+	SolutionSet sol(false);
+	std::set<GlobScope> left_unify_map_set;
+	std::set<GlobScope> right_unify_map_set;
 
-	if (!config_ordered_glob_unify(lhs, rhs, left_unify_map, right_unify_map, lhs_context, rhs_context))
+	if (!config_ordered_glob_unify(lhs, rhs, left_unify_map_set, right_unify_map_set, lhs_context, rhs_context))
 		return SolutionSet();
 
-	auto left_iter = left_unify_map.begin();
-	while (left_iter!=left_unify_map.end()) {
-		auto lside = (*left_iter).first;
-		auto rside_indices = (*left_iter).second;
-		for (Arity k = rside_indices.first; k < rside_indices.second + 1; ++k) {
-			auto s = unify(lside, rhs[k], lhs_context, rhs_context);
-			sol = join(sol, s);
+	auto left_unify_map = *left_unify_map_set.begin();
+	auto right_unify_map = *right_unify_map_set.begin();
 
-			if (not sol.is_satisfiable()) return SolutionSet();
+	for (auto left_unify_map : left_unify_map_set) {
+		SolutionSet _sol(true);
+		auto left_iter = left_unify_map.begin();
+		while (left_iter!=left_unify_map.end()) {
+			auto lside = (*left_iter).first;
+			auto rside_indices = (*left_iter).second;
+			for (Arity k = rside_indices.first; k < rside_indices.second + 1; ++k) {
+				auto s = unify(lside, rhs[k], lhs_context, rhs_context);
+				_sol = join(_sol, s);
+
+				if (not _sol.is_satisfiable()) return SolutionSet();
+			}
+			left_iter++;
 		}
-		left_iter++;
+		if (_sol.is_satisfiable()) sol.insert(_sol.begin(), _sol.end());
 	}
 
 	auto right_iter = right_unify_map.begin();
@@ -1095,9 +1102,13 @@ Unify::unordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs, Context 
 }
 
 bool Unify::config_ordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs,
-                                      Unify::GlobScope &left_unify_map, Unify::GlobScope &right_unify_map,
+                                      std::set<GlobScope> &left_unify_map_seq,
+                                      std::set<GlobScope> &right_unify_map_seq,
                                       Context lhs_context, Context rhs_context) const
 {
+	GlobScope left_unify_map;
+	GlobScope right_unify_map;
+
 	Arity lhs_arity(lhs.size());
 	Arity rhs_arity(rhs.size());
 	Arity i=0, j=0;
@@ -1155,6 +1166,30 @@ bool Unify::config_ordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs
 			if (!left_unify_map.count(lhs_handle)) {
 				ArityPair pair(j, j);
 				left_unify_map[lhs_handle] = pair;
+			} else {
+				std::set<GlobScope> _left_unify_map_set;
+				std::set<GlobScope> _right_unify_map_set;
+				HandleSeq _lhs(lhs.begin() + i + 1, lhs.end());
+				HandleSeq _rhs(rhs.begin() + j, rhs.end());
+				if (config_ordered_glob_unify(_lhs, _rhs, _left_unify_map_set,
+				                              _right_unify_map_set)) {
+					for (GlobScope map : _left_unify_map_set) {
+						for (auto &pair : map) {
+							pair.second.first += j;
+							pair.second.second += j;
+						}
+						map.insert(left_unify_map.begin(), left_unify_map.end());
+						left_unify_map_seq.insert(map);
+					}
+					for (GlobScope map : _right_unify_map_set) {
+						for (auto &pair : map) {
+							pair.second.first += j;
+							pair.second.second += j;
+						}
+						map.insert(right_unify_map.begin(), right_unify_map.end());
+						right_unify_map_seq.insert(map);
+					}
+				}
 			}
 			// if the GlobNode found a match in subsequent terms
 			left_unify_map[lhs_handle].second = j;
@@ -1218,6 +1253,8 @@ bool Unify::config_ordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs
 			if(!role_back(right_unify_map, rhs, j, i)) return false;
 		}
 	}
+	left_unify_map_seq.insert(left_unify_map);
+	right_unify_map_seq.insert(right_unify_map);
 	return true;
 }
 

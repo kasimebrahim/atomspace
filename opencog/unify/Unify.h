@@ -503,8 +503,8 @@ private:
 	* This builds a map of left and right handles to unify.
 	*/
 	bool config_ordered_glob_unify(const HandleSeq&, const HandleSeq&,
-	                               Unify::GlobScope&, Unify::GlobScope&,
-	                               Context, Context) const;
+	                               std::set<GlobScope>&, std::set<GlobScope>&,
+	                               Context lhs_context=Context(), Context rhs_context=Context()) const;
 
 	/**
 	 * when a handle in an ordered handleseq fails to unify. we need to make
