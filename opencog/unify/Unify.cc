@@ -1051,7 +1051,7 @@ bool Unify::contain_glob(const Handle &handle) const {
 Unify::SolutionSet
 Unify::ordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs,
                           Context lhs_context, Context rhs_context) const {
-	SolutionSet sol(false);
+	SolutionSet sol(true);
 	GlobScope left_unify_map;
 	GlobScope right_unify_map;
 
@@ -1063,10 +1063,8 @@ Unify::ordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs,
 		auto lside = (*left_iter).first;
 		auto rside_indices = (*left_iter).second;
 		for (Arity k = rside_indices.first; k < rside_indices.second + 1; ++k) {
-			if (lside == rhs[k]) continue;
 			auto s = unify(lside, rhs[k], lhs_context, rhs_context);
-//			sol = join(sol, s);
-			sol.insert(s.begin(), s.end());
+			sol = join(sol, s);
 
 			if (not sol.is_satisfiable()) return SolutionSet();
 		}
@@ -1080,8 +1078,7 @@ Unify::ordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs,
 		for (Arity k = lside_indices.first; k < lside_indices.second + 1; ++k) {
 			if (rside == lhs[k]) continue;
 			auto s = unify(lhs[k], rside, lhs_context, rhs_context);
-//			sol = join(sol, s);
-			sol.insert(s.begin(), s.end());
+			sol = join(sol, s);
 
 			if (not sol.is_satisfiable()) return SolutionSet();
 		}
