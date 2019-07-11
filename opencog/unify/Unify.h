@@ -499,6 +499,9 @@ private:
 	                               Context lhs_context=Context(),
 	                               Context rhs_context=Context()) const;
 
+	void unify_map_set(SolutionSet &sol, const HandleSeq &ohs, std::set<GlobScope> &map_set,
+	                   Context context_1, Context context_2) const;
+
 	/**
 	* This builds a map of left and right handles to unify.
 	*/

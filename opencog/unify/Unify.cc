@@ -1058,43 +1058,37 @@ Unify::ordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs,
 		return SolutionSet();
 
 	SolutionSet l_sol(left_unify_map_set.empty());
-	for (auto left_unify_map : left_unify_map_set) {
+	unify_map_set(l_sol, rhs, left_unify_map_set, lhs_context, rhs_context);
+
+	SolutionSet r_sol(right_unify_map_set.empty());
+	unify_map_set(r_sol, lhs, right_unify_map_set, rhs_context, lhs_context);
+
+	return join(l_sol, r_sol);
+}
+
+void Unify::unify_map_set(Unify::SolutionSet &sol, const HandleSeq &ohs,
+                          std::set<Unify::GlobScope> &map_set,
+                          Context context_1, Context context_2) const
+{
+	for (auto left_unify_map : map_set) {
 		SolutionSet _sol(true);
 		auto left_iter = left_unify_map.begin();
 		while (left_iter!=left_unify_map.end()) {
 			auto lside = (*left_iter).first;
 			auto rside_indices = (*left_iter).second;
 			for (Arity k = rside_indices.first; k < rside_indices.second + 1; ++k) {
-				auto s = unify(lside, rhs[k], lhs_context, rhs_context);
+				auto s = unify(lside, ohs[k], context_1, context_2);
 				_sol = join(_sol, s);
 
-				if (not _sol.is_satisfiable()) return SolutionSet();
+				if (not _sol.is_satisfiable()) {
+					sol = SolutionSet(false);
+					return;
+				}
 			}
 			left_iter++;
 		}
-		if (_sol.is_satisfiable()) l_sol.insert(_sol.begin(), _sol.end());
+		if (_sol.is_satisfiable()) sol.insert(_sol.begin(), _sol.end());
 	}
-
-	SolutionSet r_sol(right_unify_map_set.empty());
-	for (auto right_unify_map : right_unify_map_set) {
-		SolutionSet _sol(true);
-		auto right_iter = right_unify_map.begin();
-		while (right_iter!=right_unify_map.end()) {
-			auto rside = (*right_iter).first;
-			auto lside_indices = (*right_iter).second;
-			for (Arity k = lside_indices.first; k < lside_indices.second + 1; ++k) {
-				if (rside == lhs[k]) continue;
-				auto s = unify(lhs[k], rside, lhs_context, rhs_context);
-				_sol = join(_sol, s);
-
-				if (not _sol.is_satisfiable()) return SolutionSet();
-			}
-			right_iter++;
-		}
-		if (_sol.is_satisfiable()) r_sol.insert(_sol.begin(), _sol.end());
-	}
-
-	return join(l_sol, r_sol);
 }
 
 Unify::SolutionSet
