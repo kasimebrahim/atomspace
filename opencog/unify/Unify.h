@@ -138,6 +138,8 @@ public:
 	typedef std::pair<Arity, Arity> ArityPair;
 	typedef std::map<Handle, ArityPair> GlobScope;
 
+	typedef std::set<GlobScope> GlobScopeSet;
+
 	// This is in fact a typed block but is merely named Block due to
 	// being so frequently used.
 	typedef Partition::value_type TypedBlock;
@@ -506,8 +508,10 @@ private:
 	* This builds a map of left and right handles to unify.
 	*/
 	bool config_ordered_glob_unify(const HandleSeq&, const HandleSeq&,
-	                               std::set<GlobScope>&, std::set<GlobScope>&,
+	                               std::vector<std::pair<GlobScopeSet, GlobScopeSet>>& scope_pairs,
 	                               Context lhs_context=Context(), Context rhs_context=Context()) const;
+
+	void match_glob() const;
 
 	/**
 	 * when a handle in an ordered handleseq fails to unify. we need to make
