@@ -138,8 +138,6 @@ public:
 	typedef std::pair<Arity, Arity> ArityPair;
 	typedef std::map<Handle, ArityPair> GlobScope;
 
-	typedef std::set<GlobScope> GlobScopeSet;
-
 	// This is in fact a typed block but is merely named Block due to
 	// being so frequently used.
 	typedef Partition::value_type TypedBlock;
@@ -501,14 +499,14 @@ private:
 	                               Context lhs_context=Context(),
 	                               Context rhs_context=Context()) const;
 
-	void unify_map_set(SolutionSet &sol, const HandleSeq &ohs, std::set<GlobScope> &map_set,
+	void unify_map_set(SolutionSet &sol, const HandleSeq &ohs, GlobScope &map_set,
 	                   Context context_1, Context context_2) const;
 
 	/**
 	* This builds a map of left and right handles to unify.
 	*/
 	bool config_ordered_glob_unify(const HandleSeq&, const HandleSeq&,
-	                               std::vector<std::pair<GlobScopeSet, GlobScopeSet>>& scope_pairs,
+	                               std::vector<std::pair<GlobScope, GlobScope>>& scope_pairs,
 	                               Context lhs_context=Context(), Context rhs_context=Context()) const;
 
 	void match_glob() const;
