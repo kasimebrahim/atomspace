@@ -509,8 +509,6 @@ private:
 	                               std::vector<std::pair<GlobScope, GlobScope>>& scope_pairs,
 	                               Context lhs_context=Context(), Context rhs_context=Context()) const;
 
-	void match_glob() const;
-
 	/**
 	 * when a handle in an ordered handleseq fails to unify. we need to make
 	 * sure it is not because a previous GlobNode is unified to more nodes
