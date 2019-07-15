@@ -1052,7 +1052,7 @@ Unify::SolutionSet
 Unify::ordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs,
                           Context lhs_context, Context rhs_context) const {
 	SolutionSet t_sol(false);
-	std::vector<std::pair<GlobScope, GlobScope>> scope_pairs;
+	ScopePairs scope_pairs;
 
 	if (!config_ordered_glob_unify(lhs, rhs, scope_pairs, lhs_context, rhs_context))
 		return SolutionSet();
@@ -1098,8 +1098,7 @@ Unify::unordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs, Context 
 	return Unify::SolutionSet();
 }
 
-bool Unify::config_ordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs,
-                                      std::vector<std::pair<GlobScope, GlobScope>>& scope_pairs,
+bool Unify::config_ordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs, ScopePairs& scope_pairs,
                                       Context lhs_context, Context rhs_context) const
 {
 	GlobScope left_unify_map;
@@ -1135,24 +1134,15 @@ bool Unify::config_ordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs
 			// need to give and store the type of the GlobNode, to make
 			// sure a single GlobNode cant match multiple types.
 			if (not local_variables.is_in_varset(lhs_handle)) {
-				TypeNodePtr v = createTypeNode(rhs_type);
-				HandleSeq hs;
-				hs.push_back(lhs_handle);
-				hs.push_back(HandleCast(v));
-				Handle vlink = createLink(hs, TYPED_VARIABLE_LINK);
-				VariableListPtr vlist = createVariableList(vlink);
-
-				local_variables.extend(vlist->get_variables());
+				register_var(local_variables, lhs_handle, rhs_type);
 			}
-				// GlobNode is in local_variables and dosen't have similar type with rhs.
+			// GlobNode is in local_variables and dosen't have similar type with rhs.
 			else if (not local_variables.is_type(lhs_handle, rhs_handle)) {
 				// The GlobNode can not be satisfied.
 				if (!left_unify_map.count(lhs_handle)) {
 					// now we need to check if any GlobNode is matched more than it should.
-					if(!role_back(left_unify_map, lhs, ++i, j)) {
-						if(!role_back(right_unify_map, rhs, ++j, i))
-							return scope_pairs.empty() ? false : true;
-					}
+					if(!role_back(left_unify_map, lhs, ++i, j) and !role_back(right_unify_map, rhs, ++j, i))
+						return scope_pairs.empty() ? false : true;
 					continue;
 				}
 				i++;
@@ -1163,32 +1153,8 @@ bool Unify::config_ordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs
 				ArityPair pair(j, j);
 				left_unify_map[lhs_handle] = pair;
 			} else {
-				std::vector<std::pair<GlobScope, GlobScope>> _scope_pairs;
-				HandleSeq _lhs(lhs.begin() + i + 1, lhs.end());
-				HandleSeq _rhs(rhs.begin() + j, rhs.end());
-				if (config_ordered_glob_unify(_lhs, _rhs, _scope_pairs)) {
-					for (auto pair : _scope_pairs) {
-						GlobScope temp_left_unify_map;
-						GlobScope temp_right_unify_map;
-						auto _left_unify_map = pair.first;
-						auto _right_unify_map = pair.second;
-						for (auto &p : _left_unify_map) {
-							p.second.first += j;
-							p.second.second += j;
-						}
-						temp_left_unify_map.insert(left_unify_map.begin(), left_unify_map.end());
-						temp_left_unify_map.insert(_left_unify_map.begin(), _left_unify_map.end());
-
-						for (auto &p : _right_unify_map) {
-							p.second.first += i + 1;
-							p.second.second += i + 1;
-						}
-						temp_right_unify_map.insert(right_unify_map.begin(), right_unify_map.end());
-						temp_right_unify_map.insert(_right_unify_map.begin(), _right_unify_map.end());
-
-						scope_pairs.push_back({temp_left_unify_map, temp_right_unify_map});
-					}
-				}
+				ScopePairs tmp = populate_scope(lhs, rhs, left_unify_map, right_unify_map, i + 1, j);
+				scope_pairs.insert(scope_pairs.end(), tmp.begin(), tmp.end());
 			}
 			// if the GlobNode found a match in subsequent terms
 			left_unify_map[lhs_handle].second = j;
@@ -1198,65 +1164,25 @@ bool Unify::config_ordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs
 		}
 
 		if (rhs_type == GLOB_NODE) {
-			// if the GlobNode is not in local_variables already we
-			// need to give and store the type of the GlobNode, to make
-			// sure a single GlobNode cant match multiple types.
 			if (not local_variables.is_in_varset(rhs_handle)) {
-				TypeNodePtr v = createTypeNode(lhs_type);
-				HandleSeq hs;
-				hs.push_back(rhs_handle);
-				hs.push_back(HandleCast(v));
-				Handle vlink = createLink(hs, TYPED_VARIABLE_LINK);
-				VariableListPtr vlist = createVariableList(vlink);
-
-				local_variables.extend(vlist->get_variables());
+				register_var(local_variables, rhs_handle, lhs_type);
 			}
-				// GlobNode is in local_variables and dosen't have similar type with rhs.
 			else if (not local_variables.is_type(rhs_handle, lhs_handle)) {
-				// The GlobNode can not be satisfied.
 				if (!right_unify_map.count(rhs_handle)) {
-					// now we need to check if any GlobNode is matched more than it should.
-					if(!role_back(left_unify_map, lhs, ++i, j)) {
-						if(!role_back(right_unify_map, rhs, ++j, i)) return scope_pairs.empty() ? false : true;
-					}
+					if(!role_back(left_unify_map, lhs, ++i, j) and !role_back(right_unify_map, rhs, ++j, i))
+						return scope_pairs.empty() ? false : true;
 					continue;
 				}
 				j++;
 				continue;
 			}
-			// if this is the first time the GlobNode is satisfieble
 			if (!right_unify_map.count(rhs_handle)) {
 				ArityPair pair(i, i);
 				right_unify_map[rhs_handle] = pair;
 			} else {
-				std::vector<std::pair<GlobScope, GlobScope>> _scope_pairs;
-				HandleSeq _lhs(lhs.begin() + i, lhs.end());
-				HandleSeq _rhs(rhs.begin() + j + 1, rhs.end());
-				if (config_ordered_glob_unify(_lhs, _rhs, _scope_pairs)) {
-					for (auto pair : _scope_pairs) {
-						GlobScope temp_left_unify_map;
-						GlobScope temp_right_unify_map;
-						auto _left_unify_map = pair.first;
-						auto _right_unify_map = pair.second;
-						for (auto &p : _left_unify_map) {
-							p.second.first += j + 1;
-							p.second.second += j + 1;
-						}
-						temp_left_unify_map.insert(left_unify_map.begin(), left_unify_map.end());
-						temp_left_unify_map.insert(_left_unify_map.begin(), _left_unify_map.end());
-
-						for (auto &p : _right_unify_map) {
-							p.second.first += i;
-							p.second.second += i;
-						}
-						temp_right_unify_map.insert(right_unify_map.begin(), right_unify_map.end());
-						temp_right_unify_map.insert(_right_unify_map.begin(), _right_unify_map.end());
-
-						scope_pairs.push_back({temp_left_unify_map, temp_right_unify_map});
-					}
-				}
+				ScopePairs tmp = populate_scope(lhs, rhs, left_unify_map, right_unify_map, i, j + 1);
+				scope_pairs.insert(scope_pairs.end(), tmp.begin(), tmp.end());
 			}
-			// if the GlobNode found a match in subsequent terms
 			right_unify_map[rhs_handle].second = i;
 			i++;
 			if (i == lhs_arity) j++;
@@ -1281,6 +1207,52 @@ bool Unify::config_ordered_glob_unify(const HandleSeq &lhs, const HandleSeq &rhs
 	}
 	scope_pairs.push_back({left_unify_map, right_unify_map});
 	return true;
+}
+
+void Unify::register_var(Variables &vars, const Handle &handle, Type type) const
+{
+	TypeNodePtr v = createTypeNode(type);
+	HandleSeq hs;
+	hs.push_back(handle);
+	hs.push_back(HandleCast(v));
+	Handle vlink = createLink(hs, TYPED_VARIABLE_LINK);
+	VariableListPtr vlist = createVariableList(vlink);
+
+	vars.extend(vlist->get_variables());
+}
+
+Unify::ScopePairs Unify::populate_scope(const HandleSeq &lhs, const HandleSeq &rhs,
+                                        const GlobScope &left_unify_map, const GlobScope &right_unify_map,
+                                        const Arity i, const Arity j) const
+{
+	ScopePairs result;
+	ScopePairs _scope_pairs;
+	HandleSeq _lhs(lhs.begin() + i, lhs.end());
+	HandleSeq _rhs(rhs.begin() + j, rhs.end());
+	if (config_ordered_glob_unify(_lhs, _rhs, _scope_pairs)) {
+		for (auto pair : _scope_pairs) {
+			GlobScope temp_left_unify_map;
+			GlobScope temp_right_unify_map;
+			auto _left_unify_map = pair.first;
+			auto _right_unify_map = pair.second;
+			for (auto &p : _left_unify_map) {
+				p.second.first += j;
+				p.second.second += j;
+			}
+			temp_left_unify_map.insert(left_unify_map.begin(), left_unify_map.end());
+			temp_left_unify_map.insert(_left_unify_map.begin(), _left_unify_map.end());
+
+			for (auto &p : _right_unify_map) {
+				p.second.first += i;
+				p.second.second += i;
+			}
+			temp_right_unify_map.insert(right_unify_map.begin(), right_unify_map.end());
+			temp_right_unify_map.insert(_right_unify_map.begin(), _right_unify_map.end());
+
+			result.push_back({temp_left_unify_map, temp_right_unify_map});
+		}
+	}
+	return result;
 }
 
 bool Unify::role_back(Unify::GlobScope &unify_map, const HandleSeq &lhs, Arity &i, Arity &j) const
