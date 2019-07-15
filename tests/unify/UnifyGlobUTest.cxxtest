@@ -102,6 +102,8 @@ public:
 	void test_simple_glob6();
 	void test_simple_glob7();
 	void test_simple_glob8();
+
+	void test_join();
 };
 
 void UnifyGlobUTest::setUp(void)
@@ -228,6 +230,24 @@ void UnifyGlobUTest::test_simple_glob8()
 	                             {{{V, D}, D}}, {{{V, S}, S}}});
 
 	std::cout<< "\n expected\n" << oc_to_string(expected) <<std::endl;
+
+	TS_ASSERT_EQUALS(result, expected);
+}
+
+void UnifyGlobUTest::test_join()
+{
+
+	Unify unify(P, Q);
+	Unify::Block b1({X, P});
+	Unify::Block b2({X, Q});
+	Unify::SolutionSet s1({{{b1, P}}});
+	Unify::SolutionSet s2({{{b2, Q}}});
+
+	auto result = unify.join(s1, s2);
+	Unify::SolutionSet expected({{{b1, P}, {b2, Q}}});
+
+	std::cout << "result = " << oc_to_string(result) << std::endl;
+	std::cout << "expected = " << oc_to_string(expected) << std::endl;
 
 	TS_ASSERT_EQUALS(result, expected);
 }
