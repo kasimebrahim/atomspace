@@ -68,6 +68,10 @@ RewriteLink::RewriteLink(const Link &l)
 inline Handle append_rand_str(const Handle& var)
 {
 	std::string new_var_name = randstr(var->get_name() + "-");
+	if (var->get_type() == GLOB_NODE) {
+		HandleSeq seq = {createNode(GLOB_NODE, new_var_name)};
+		return createLink(seq, LIST_LINK);
+	}
 	return createNode(VARIABLE_NODE, new_var_name);
 }
 
