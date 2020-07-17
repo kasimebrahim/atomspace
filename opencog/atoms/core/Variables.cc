@@ -249,6 +249,12 @@ bool Variables::is_type(const Handle& var, const Handle& val) const
 	// If not holding, then fail.
 	if (varset.end() == varset.find(var)) return false;
 
+	// Assuming Every thing is alpha converted, this is required such
+	// as in rewriting a pattern with typedecl and a variable that is
+	// not in the substitution map.
+	// [see RewriteLinkUTest::test_beta_reduce_3()]
+	if (var == val) return true;
+
 	// If no type restrictions, then success.
 	VariableTypeMap::const_iterator tit = _typemap.find(var);
 	if (_typemap.end() == tit) return true;
