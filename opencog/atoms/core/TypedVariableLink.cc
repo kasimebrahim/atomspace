@@ -61,8 +61,11 @@ void TypedVariableLink::init()
 				nameserver().getTypeName(dtype).c_str(),
 				to_short_string().c_str());
 
-	_typech = createTypeChoice(HandleSeq({_outgoing[1]}),
-		TYPE_CHOICE, GLOB_NODE == _outgoing[0]->get_type());
+	HandleSeq seq = _outgoing[1]->get_type() == TYPE_CHOICE ?
+	                _outgoing[1]->getOutgoingSet() :
+	                HandleSeq({_outgoing[1]});
+	_typech = createTypeChoice(std::move(seq),
+	                           TYPE_CHOICE, GLOB_NODE == _outgoing[0]->get_type());
 }
 
 TypedVariableLink::TypedVariableLink(const HandleSeq&& oset, Type t)

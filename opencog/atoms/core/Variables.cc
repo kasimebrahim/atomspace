@@ -622,11 +622,14 @@ bool Variables::operator<(const Variables& other) const
 Handle Variables::get_type_decl(const Handle& var, const Handle& alt) const
 {
 	// Get the type info
-	const auto& tit = _typemap.find(var);
+	const auto &tit = _typemap.find(var);
 	if (_typemap.end() == tit) return alt;
 
+	Handle tc = HandleCast(tit->second->get_typedecl());
 	return HandleCast(createTypedVariableLink(alt,
-		HandleCast(tit->second->get_typedecl())));
+	                                          tc->get_arity() == 1 ?
+	                                          tc->getOutgoingAtom(0) :
+	                                          tc));
 }
 
 Handle Variables::get_vardecl() const
