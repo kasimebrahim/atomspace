@@ -151,6 +151,7 @@ struct Variables : public FreeVariables
 	// the other are ordered, then the result is ordered.
 	void extend(const Variables&);
 	void extend_intersect(const Variables&);
+	void union_type(const Handle&);
 
 	// Erase the given variable, if exist
 	void erase(const Handle&);

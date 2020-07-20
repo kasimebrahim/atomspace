@@ -468,7 +468,7 @@ void Variables::extend(const Variables& vset)
 	{
 		auto typemap_it = vset._typemap.find(h);
 		if (typemap_it != vset._typemap.end())
-			unpack_vartype(HandleCast(typemap_it->second));
+			union_type(HandleCast(typemap_it->second));
 		else
 		{
 			varseq.emplace_back(h);
@@ -536,6 +536,42 @@ void Variables::extend_intersect(const Variables& vset)
 
 	// If either this or the other are ordered then the result is ordered
 	_ordered = _ordered or vset._ordered;
+}
+
+void Variables::union_type(const Handle& htypelink)
+{
+	if (TYPED_VARIABLE_LINK != htypelink->get_type()) {
+		throw InvalidParamException(TRACE_INFO,
+		                            "Expecting TypedVariableLink, got %s",
+		                            htypelink->to_short_string().c_str());
+	}
+
+	TypedVariableLinkPtr tvlp(TypedVariableLinkCast(htypelink));
+	const Handle &varname(tvlp->get_variable());
+
+	auto itr = _typemap.find(varname);
+	if (itr != _typemap.end()) {
+		TypeChoicePtr prtpc = itr->second->get_typedecl(),
+				nwtpc = tvlp->get_typedecl();
+
+		HandleSet tps(prtpc->getOutgoingSet().begin(),
+		              prtpc->getOutgoingSet().end());
+		tps.insert(nwtpc->getOutgoingSet().begin(),
+		           nwtpc->getOutgoingSet().end());
+
+		TypedVariableLinkPtr untpc =
+				createTypedVariableLink(HandleSeq{
+						varname,
+						Handle(createTypeChoice(
+								HandleSeq(tps.begin(), tps.end())))});
+
+		_typemap.erase(itr);
+		_typemap.insert({varname, untpc});
+	} else {
+		_typemap.insert({varname, tvlp});
+		varset.insert(varname);
+		varseq.emplace_back(varname);
+	}
 }
 
 /* ================================================================= */
