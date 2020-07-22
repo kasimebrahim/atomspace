@@ -72,6 +72,7 @@ public:
 	void test_beta_reduce_2();
 	void test_beta_reduce_3();
 	void test_beta_reduce_4();
+	void test_beta_reduce_5();
 	void test_consume_quotations_1();
 	void test_consume_quotations_2();
 	void test_consume_quotations_3();
@@ -218,6 +219,37 @@ void RewriteLinkUTest::test_beta_reduce_4()
 			createLink(LAMBDA_LINK,
 			           createLink(VARIABLE_SET, VarA, VarB),
 			           createLink(PRESENT_LINK, InhAB));
+
+	TS_ASSERT(content_eq(result, expected));
+	logger().info("END TEST: %s", __FUNCTION__);
+}
+
+void RewriteLinkUTest::test_beta_reduce_5()
+{
+	logger().info("BEGIN TEST: %s", __FUNCTION__);
+
+	// This just indirectly tests variables in a RewriteLink
+	// (or any ScopeLink). i:e When there are same variables
+	// Y1] and [Y2] and Y2 is added to as.
+	Handle
+			X = createNode(VARIABLE_NODE, "$X"),
+			Y1 = createNode(VARIABLE_NODE, "$Y"),
+			Y2 = an(VARIABLE_NODE, "$Y"),
+			Z = createNode(VARIABLE_NODE, "$Z"),
+			A = createNode(CONCEPT_NODE, "A"),
+			VarSet = createLink(VARIABLE_SET, X, Y1, Z),
+			InhXY = createLink(INHERITANCE_LINK, X, Y1),
+			InhZY = createLink(INHERITANCE_LINK, Z, Y2),
+			body = createLink(PRESENT_LINK, InhXY, InhZY),
+			lambda = createLink(LAMBDA_LINK, VarSet, body);
+	Variables vars;
+	RewriteLinkPtr rc = RewriteLinkCast(lambda);
+	Handle result = rc->beta_reduce(HandleMap{{X, A}}),
+			expected = createLink(LAMBDA_LINK,
+			                      createLink(VARIABLE_SET, Y1, Z),
+			                      createLink(PRESENT_LINK,
+			                                 createLink(INHERITANCE_LINK, A, Y1),
+			                                 InhZY));
 
 	TS_ASSERT(content_eq(result, expected));
 	logger().info("END TEST: %s", __FUNCTION__);
