@@ -70,6 +70,7 @@ public:
 	void test_unordered();
 	void test_beta_reduce_1();
 	void test_beta_reduce_2();
+	void test_beta_reduce_3();
 	void test_consume_quotations_1();
 	void test_consume_quotations_2();
 	void test_consume_quotations_3();
@@ -162,6 +163,32 @@ void RewriteLinkUTest::test_beta_reduce_2()
 
 	TS_ASSERT(content_eq(result, expected));
 
+	logger().info("END TEST: %s", __FUNCTION__);
+}
+
+void RewriteLinkUTest::test_beta_reduce_3()
+{
+	Handle V1 = createNode(VARIABLE_NODE, "$PM-45cccd8c"),
+			V2 = createNode(VARIABLE_NODE, "$PM-e84bdd8"),
+			CT = createNode(TYPE_NODE, "ConceptNode"),
+			pattern = createLink(LAMBDA_LINK,
+			                     createLink(VARIABLE_SET,
+			                                createLink(TYPED_VARIABLE_LINK, V1, CT),
+			                                createLink(TYPED_VARIABLE_LINK, V2, CT)),
+			                     createLink(PRESENT_LINK,
+			                                createLink(INHERITANCE_LINK, V2, V1)));
+	RewriteLinkPtr rpt = RewriteLinkCast(pattern);
+
+	Handle cpt = createNode(CONCEPT_NODE, "A");
+	Handle result = rpt->beta_reduce(HandleMap{{V2, cpt}});
+
+	Handle expected = createLink(LAMBDA_LINK,
+	                             createLink(TYPED_VARIABLE_LINK, V1, CT),
+	                             createLink(PRESENT_LINK,
+	                                        createLink(INHERITANCE_LINK,
+	                                                   createNode(CONCEPT_NODE, "A"),
+	                                                   V1)));
+	TS_ASSERT(content_eq(result, expected));
 	logger().info("END TEST: %s", __FUNCTION__);
 }
 
