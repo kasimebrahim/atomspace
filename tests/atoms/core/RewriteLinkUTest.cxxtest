@@ -71,6 +71,7 @@ public:
 	void test_beta_reduce_1();
 	void test_beta_reduce_2();
 	void test_beta_reduce_3();
+	void test_beta_reduce_4();
 	void test_consume_quotations_1();
 	void test_consume_quotations_2();
 	void test_consume_quotations_3();
@@ -188,6 +189,36 @@ void RewriteLinkUTest::test_beta_reduce_3()
 	                                        createLink(INHERITANCE_LINK,
 	                                                   createNode(CONCEPT_NODE, "A"),
 	                                                   V1)));
+	TS_ASSERT(content_eq(result, expected));
+	logger().info("END TEST: %s", __FUNCTION__);
+}
+
+void RewriteLinkUTest::test_beta_reduce_4()
+{
+	Handle
+			X = createNode(VARIABLE_NODE, "$X"),
+			VarA = createLink(TYPED_VARIABLE_LINK,
+			                  createNode(VARIABLE_NODE, "$A"),
+			                  createNode(TYPE_NODE, "ConceptNode")),
+			VarB = createLink(TYPED_VARIABLE_LINK,
+			                  createNode(VARIABLE_NODE, "$B"),
+			                  createNode(TYPE_NODE, "ConceptNode")),
+			pattern = createLink(LAMBDA_LINK, X, createLink(PRESENT_LINK, X)),
+			InhAB = createLink(INHERITANCE_LINK,
+			                   createNode(VARIABLE_NODE, "$A"),
+			                   createNode(VARIABLE_NODE, "$B")),
+			val = createLink(LAMBDA_LINK,
+			                 createLink(VARIABLE_SET, VarA, VarB),
+			                 InhAB);
+
+	RewriteLinkPtr rt = RewriteLinkCast(pattern);
+	Handle result = rt->beta_reduce(HandleMap{{X, val}});
+
+	Handle expected =
+			createLink(LAMBDA_LINK,
+			           createLink(VARIABLE_SET, VarA, VarB),
+			           createLink(PRESENT_LINK, InhAB));
+
 	TS_ASSERT(content_eq(result, expected));
 	logger().info("END TEST: %s", __FUNCTION__);
 }
