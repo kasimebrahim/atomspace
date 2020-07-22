@@ -223,7 +223,9 @@ HandleSeq VarScraper::sorted_free_variables_ordered_outgoing(
 		HandleSeq fvs_n;
 		std::copy_if(fvs.begin(), fvs.end(), std::back_inserter(fvs_n),
 		             [&res](const Handle& var) {
-			             return std::find(res.begin(), res.end(), var) == res.end();
+			             return std::find_if(res.begin(), res.end(), [&var](Handle item){
+			             	return content_eq(var, item);
+			             }) == res.end();
 		             });
 
 		// Concatenate
